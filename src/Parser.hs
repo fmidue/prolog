@@ -84,7 +84,7 @@ toParser (InfixOp assoc name) = Infix  (reservedOp name >> return (\t1 t2 -> Str
                                        (case assoc of AssocLeft  -> Parsec.AssocLeft
                                                       AssocRight -> Parsec.AssocRight)
 reservedOp = P.reservedOp $ P.makeTokenParser $ emptyDef
-   { P.opStart = oneOf ";,<=>\\i*+m@"
+   { P.opStart = oneOf ",<=>\\i*+m@"
    , P.opLetter = oneOf "=.:<+"
    , P.reservedOpNames = operatorNames
    , P.caseSensitive = True
@@ -92,7 +92,7 @@ reservedOp = P.reservedOp $ P.makeTokenParser $ emptyDef
 
 charWs c = char c <* whitespace
 
-operatorNames = [ ";", ",", "<", "=..", "=:=", "=<", "=", ">=", ">", "\\=", "is", "*", "+", "-", "\\", "mod", "div", "\\+" ]
+operatorNames = [",", "<", "=..", "=:=", "=<", "=", ">=", ">", "\\=", "is", "*", "+", "-", "\\", "mod", "div", "\\+" ]
 
 variable = (Wildcard <$ try (char '_' <* notFollowedBy (alphaNum <|> char '_')))
        <|> Var <$> vname
@@ -125,4 +125,3 @@ representChar c = Struct (show (fromEnum c)) [] -- This is the classical Prolog 
 --toChar :: Term -> Maybe Char
 --toChar (Struct "char" [Struct (toEnum . read->c) []]) = Just c
 --toChar _                                              = Nothing
-

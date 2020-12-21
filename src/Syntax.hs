@@ -62,7 +62,7 @@ compound_terms _             = Nothing
 
 
 instance Show Term where
-   show = prettyPrint False 0
+   show t = prettyPrint False 0 t
 
 
 prettyPrint True _ t@(Struct "," [_,_]) =
@@ -140,7 +140,7 @@ data Assoc = AssocLeft
 hierarchy :: Bool -> [[Operator]]
 hierarchy ignoreConjunction =
    --[ [ InfixOp NonAssoc "-->", InfixOp NonAssoc ":-" ]
-   [ [ infixR ";" ] ] ++
+   -- [ [ infixR ";" ] ] ++
    (if ignoreConjunction then [] else [ [ infixR "," ] ])  ++
    [ [ prefix "\\+" ]
    , map infixL ["<", "=..", "=:=", "=<", "=", ">=", ">", "\\=", "is", "==", "@<", "@=<", "@>=", "@>"]
