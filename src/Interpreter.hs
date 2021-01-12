@@ -161,13 +161,19 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
          trace_ "Depth"   depth
          trace_ "Unif."   usf
          trace_ "Goals"   (Cut n:gs)
+         trace_ "Cut size" n
          mapM_ (trace_ "Stack") stack
 
          createConnections (path, usf, Cut n:gs) [(1:path,[],[])] [(1:path, usf, gs)]
 
          markCutBranches (take n stack)
 
-         resolve' depth (1:path, usf, gs) (drop n stack)
+         let gs' = everywhere (mkT $ unshiftCut n) gs
+
+         resolve' depth (1:path, usf, gs') (drop n stack)
+         where
+           unshiftCut n (Cut m) = Cut (m-n)
+           unshiftCut _ t = t
       resolve' depth (path, usf, goals@(Struct "asserta" [fact]:gs)) stack = do
          trace "=== resolve' (asserta/1) ==="
          trace_ "Depth"   depth
@@ -274,6 +280,5 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
          return (fail "Goal cannot be resolved!")
       backtrack depth (((path,u,gs),alts):stack) = do
          trace "=== backtrack ==="
+         -- depth is not adjusted correctly if choice-points have been cut
          choose (pred depth) (path,u,gs) alts stack
-
-
