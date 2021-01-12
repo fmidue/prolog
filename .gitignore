@@ -5,3 +5,7 @@ bench/runbench
 *.o
 *~
 *.swp
+.ghci
+
+dist-newstyle
+.stack-work

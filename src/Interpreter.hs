@@ -218,11 +218,11 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
 
          let bs = [ (1:path,u,[]) | u <- unify l r ]
          let branches = do
-             (p,u,[]) <- bs
-             let u'  = usf +++ u
-                 gs' = map (apply u') gs
-                 gs'' = everywhere (mkT shiftCut) gs'
-             return (p, u', gs'')
+               (p,u,[]) <- bs
+               let u'  = usf +++ u
+                   gs' = map (apply u') gs
+                   gs'' = everywhere (mkT shiftCut) gs'
+               return (p, u', gs'')
 
          createConnections (path, usf, nextGoal:gs) bs branches
 

@@ -1,0 +1,57 @@
+name:                prolog
+version:             0.3.2
+synopsis:            A Prolog interpreter written in Haskell.
+description:         A Prolog interpreter written in Haskell. Implements a subset of the Prolog language.
+license:             PublicDomain
+author:              Matthias Bartsch
+maintainer:          Marcel Fourné (haskell@marcelfourne.de)
+category:            Language
+build-type:          Simple
+github:              mfourne/prolog
+
+dependencies:
+  - base >=4 && <5
+  - parsec >= 3.1.1
+  - syb >= 0.3
+  - mtl >= 2.0.1.0
+  - containers
+
+  - template-haskell
+  - th-lift >=0.5.3
+  - transformers >=0.2.2.0
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Language.Prolog
+    - Language.Prolog.IsString
+    - Language.Prolog.Quote
+
+tests:
+  spec:
+    source-dirs: specs
+    main: Main.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -O2
+    dependencies:
+      - prolog
+      - directory
+      - filepath
+      - HUnit
+      - ansi-terminal
+
+benchmarks:
+  bench:
+    source-dirs: bench
+    main: Main.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -O2
+    dependencies:
+      - prolog
+      - deepseq
