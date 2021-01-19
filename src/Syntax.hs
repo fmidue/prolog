@@ -62,7 +62,7 @@ compound_terms _             = Nothing
 
 
 instance Show Term where
-   show t = prettyPrint False 0 t
+   show = prettyPrint False 0
 
 
 prettyPrint True _ t@(Struct "," [_,_]) =
@@ -137,12 +137,15 @@ data Operator = PrefixOp String
 data Assoc = AssocLeft
            | AssocRight
 
+-- operators with higher position in this list appear higher in
+-- the parsed expression tree. This is because the list is reversed
+-- before passed to the parser. FIXME: clean this up/move reverse here?
 hierarchy :: Bool -> [[Operator]]
 hierarchy ignoreConjunction =
    --[ [ InfixOp NonAssoc "-->", InfixOp NonAssoc ":-" ]
-   -- [ [ infixR ";" ] ] ++
-   (if ignoreConjunction then [] else [ [ infixR "," ] ])  ++
-   [ [ prefix "\\+" ]
+   [ [ infixR ";" ]
+   , [ infixR "," | ignoreConjunction ]
+   , [ prefix "\\+" ]
    , map infixL ["<", "=..", "=:=", "=<", "=", ">=", ">", "\\=", "is", "==", "@<", "@=<", "@>=", "@>"]
    , map infixL ["+", "-", "\\"]
    , [ infixL "*"]

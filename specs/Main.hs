@@ -10,7 +10,7 @@ import System.Environment (getArgs)
 import Test.HUnit
 import Text.Parsec
 
-import Language.Prolog (vname, term, bottom, resolve, consult)
+import Language.Prolog (vname, term, bottom, whitespace, resolve, consult)
 
 
 main = do
@@ -43,14 +43,14 @@ colorizeResult result = do
 specFile p = testSpec p `sepBy` newline <* eof
 
 testSpec p = do
-  q  <- string "?- " >> term <* string "." <* newline
-  us <- unifiers <* optional (string " ;" >> newline >> string "false") <* string "." <* ((newline >> return ()) <|> eof)
+  q  <- string "?-" >> whitespace >> term <* string "." <* newline
+  us <- unifiers <* optional (whitespace >> string ";" >> newline >> string "false") <* string "." <* ((newline >> return ()) <|> eof)
   return $ "?- " ++ show q ++ "." ~: resolve p [q] >>= (@?= us)
 
-unifiers =  (unifier `sepBy1` (try $ string " ;" <* newline >> notFollowedBy (string "false.")))
+unifiers =  (unifier `sepBy1` (try $ string ";" <* newline >> notFollowedBy (string "false.")))
         <|> (string "false" >> return [])
 
 unifier =  (substitution `sepBy1` (string "," <* newline))
        <|> (string "true" >> return [])
 
-substitution = (,) <$> vname <* string " = " <*> bottom
+substitution = (,) <$> vname <* string "=" <* whitespace <*> bottom

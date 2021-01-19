@@ -11,7 +11,7 @@ module Prolog
    , resolve, resolve_
    , (+++)
    , consult, consultString, parseQuery
-   , program, whitespace, comment, clause, terms, term, bottom, vname
+   , program, whitespace, clause, terms, term, bottom, vname
    )
 where
 

@@ -11,8 +11,7 @@ queens3([],Qs,Qs).
 
 attack(X,Xs) :- attack3(X, 1, Xs).
 
-attack3(X,N,[Y|_]) :- X =:= Y+N.
-attack3(X,N,[Y|_]) :- X =:= Y-N.
+attack3(X,N,[Y|_]) :- X =:= Y+N ; X =:= Y-N.
 attack3(X,N,[_|Ys]) :- N1 is N+1, attack3(X,N1,Ys).
 
 rangeList(M,N,[M]) :- M >= N, !.
