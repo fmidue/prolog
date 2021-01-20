@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f6f08f06e8d9100c061eb579a2bcefbef15050a958c28e9c89d49878a8c3d747
+-- hash: 883748c33d601581d684077f8442b83df1e09f76b5a6d5c2e92c256ec5afcfbc
 
 name:           prolog
 version:        0.4.0
