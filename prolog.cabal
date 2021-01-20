@@ -7,7 +7,7 @@ cabal-version: 1.12
 -- hash: f6f08f06e8d9100c061eb579a2bcefbef15050a958c28e9c89d49878a8c3d747
 
 name:           prolog
-version:        0.3.2
+version:        0.4.0
 synopsis:       A Prolog interpreter written in Haskell.
 description:    A Prolog interpreter written in Haskell. Implements a subset of the Prolog language.
 category:       Language
