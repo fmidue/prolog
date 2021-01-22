@@ -38,6 +38,7 @@ builtins =
    , ClauseFn (Struct "=<"  [var "N", var "M"]) (binaryIntegerPredicate (<=))
    , ClauseFn (Struct ">="  [var "N", var "M"]) (binaryIntegerPredicate (>=))
    , ClauseFn (Struct "=:=" [var "N", var "M"]) (binaryIntegerPredicate (==))
+   , ClauseFn (Struct "=\\=" [var "N", var "M"]) (binaryIntegerPredicate (/=))
    , ClauseFn (Struct "@<" [var "T1", var "T2"]) (binaryPredicate (<))
    , ClauseFn (Struct "@>" [var "T1", var "T2"]) (binaryPredicate (>))
    , ClauseFn (Struct "@=<"[var "T1", var "T2"]) (binaryPredicate (<=))

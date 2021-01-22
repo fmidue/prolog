@@ -146,7 +146,7 @@ hierarchy ignoreConjunction =
    [ [ infixR ";" ]
    , [ infixR "," | ignoreConjunction ]
    , [ prefix "\\+" ]
-   , map infixL ["<", "=..", "=:=", "=<", "=", ">=", ">", "\\=", "is", "==", "@<", "@=<", "@>=", "@>"]
+   , map infixL ["<", "=..", "=:=", "=\\=", "=<", "=", ">=", ">", "\\=", "is", "==", "@<", "@=<", "@>=", "@>"]
    , map infixL ["+", "-", "\\"]
    , [ infixL "*"]
    , [ infixL "mod" ]

@@ -130,7 +130,7 @@ langProlog = P.LanguageDef
   , P.caseSensitive = True
   }
 
-operatorNames = [ ";", ",", "<", "=..", "=:=", "=<", "=", ">=", ">", "\\=", "is", "*", "+", "-", "\\", "mod", "div", "\\+" ]
+operatorNames = [ ";", ",", "<", "=..", "=:=", "=\\=", "=<", "=", ">=", ">", "\\=", "is", "*", "+", "-", "\\", "mod", "div", "\\+" ]
 
 -- lexer
 lexer = P.makeTokenParser langProlog
