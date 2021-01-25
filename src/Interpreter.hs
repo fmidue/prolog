@@ -1,4 +1,9 @@
-{-# LANGUAGE ViewPatterns, GeneralizedNewtypeDeriving, FlexibleInstances, FlexibleContexts, UndecidableInstances, IncoherentInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE IncoherentInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 module Interpreter
    ( resolve, resolve_
    , MonadTrace(..), withTrace
@@ -10,7 +15,7 @@ import Control.Monad.Writer
 import Control.Monad.State
 import Control.Monad.Error
 import Data.Maybe (isJust)
-import Data.Generics (everywhere, mkT)
+import Data.Generics (everywhere, mkT, everywhereM, mkM)
 import Control.Applicative ((<$>),(<*>),(<$),(<*), Applicative(..), Alternative)
 import Data.List (sort, nub)
 
@@ -30,8 +35,8 @@ builtins =
    , Clause (Struct "\\+" [var "A"]) []
    , Clause (Struct "true" []) []
    , Clause (Struct "," [var "A", var "B"]) [var "A", var "B"]
-   , Clause (Struct ";" [var "A", Wildcard]) [var "A"]
-   , Clause (Struct ";" [Wildcard, var "B"]) [var "B"]
+   , Clause (Struct ";" [var "A", Var newWildcard]) [var "A"]
+   , Clause (Struct ";" [Var newWildcard, var "B"]) [var "B"]
    , ClauseFn (Struct "is"  [var "L", var "R"]) is
    , ClauseFn (Struct "<"   [var "N", var "M"]) (binaryIntegerPredicate (<))
    , ClauseFn (Struct ">"   [var "N", var "M"]) (binaryIntegerPredicate (>))
@@ -142,22 +147,31 @@ resolve program goals = runNoGraphT (resolve_ program goals)
 
 resolve_ :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) => Program -> [Goal] -> m [Unifier]
 -- Yield all unifiers that resolve <goal> using the clauses from <program>.
-resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals) []) (createDB (builtins ++ program) ["false","fail"])   -- NOTE Is it a good idea to "hardcode" the builtins like this?
+resolve_ program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [], goals') []) (createDB (builtins ++ program) ["false","fail"])   -- NOTE Is it a good idea to "hardcode" the builtins like this?
   where
-      cleanup = filter ((\(VariableName i _) -> i == 0) . fst)
+      (goals',wildN) = flip runState 1 $ everywhereM (mkM renameW) goals
+      renameW :: VariableName -> State Int VariableName
+      renameW (Wildcard Nothing) = do
+        n <- get
+        modify (+1)
+        pure $ Wildcard (Just n)
+      renameW v@(VariableName _ _) = pure v
+      cleanup = filter (queryVarialbes . fst)
+      queryVarialbes (VariableName i _) = i == 0
+      queryVarialbes _ = False
 
       whenPredicateIsUnknown sig action = asks (hasPredicate sig) >>= flip unless action
 
-      --resolve' :: Int -> Unifier -> [Goal] -> Stack -> m [Unifier]
-      resolve' depth (path, usf, []) stack = do
+      --resolve' :: Int -> Int -> Unifier -> [Goal] -> Stack -> m [Unifier]
+      resolve' wildN depth (path, usf, []) stack = do
          trace "=== yield solution ==="
          trace_ "Depth" depth
          trace_ "Unif." usf
 
          markSolution usf
 
-         (cleanup usf:) <$> backtrack depth stack
-      resolve' depth (path, usf, Cut n:gs) stack = do
+         (cleanup usf:) <$> backtrack wildN depth stack
+      resolve' wildN depth (path, usf, Cut n:gs) stack = do
          trace "=== resolve' (Cut) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -171,11 +185,11 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
 
          let gs' = everywhere (mkT $ unshiftCut n) gs
 
-         resolve' depth (1:path, usf, gs') (drop n stack)
+         resolve' wildN depth (1:path, usf, gs') (drop n stack)
          where
            unshiftCut n (Cut m) = Cut (m-n)
            unshiftCut _ t = t
-      resolve' depth (path, usf, goals@(Struct "asserta" [fact]:gs)) stack = do
+      resolve' wildN depth (path, usf, goals@(Struct "asserta" [fact]:gs)) stack = do
          trace "=== resolve' (asserta/1) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -184,8 +198,8 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
 
          createConnections (path, usf, goals) [(1:path,[],[])] [(1:path, usf, gs)]
 
-         local (asserta fact) $ resolve' depth (1:path, usf, gs) stack
-      resolve' depth (path, usf, goals@(Struct "assertz" [fact]:gs)) stack = do
+         local (asserta fact) $ resolve' wildN depth (1:path, usf, gs) stack
+      resolve' wildN depth (path, usf, goals@(Struct "assertz" [fact]:gs)) stack = do
          trace "=== resolve' (assertz/1) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -194,8 +208,8 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
 
          createConnections (path, usf, goals) [(1:path,[],[])] [(1:path, usf, gs)]
 
-         local (assertz fact) $ resolve' depth (1:path, usf, gs) stack
-      resolve' depth (path, usf, goals@(Struct "retract" [t]:gs)) stack = do
+         local (assertz fact) $ resolve' wildN depth (1:path, usf, gs) stack
+      resolve' wildN depth (path, usf, goals@(Struct "retract" [t]:gs)) stack = do
          trace "=== resolve' (retract/1) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -207,8 +221,8 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
          clauses <- asks (getClauses t)
          case [ t' | Clause t' [] <- clauses, isJust (unify t t') ] of
             []       -> return (fail "retract/1")
-            (fact:_) -> local (abolish fact) $ resolve' depth (1:path, usf, gs) stack
-      resolve' depth (path, usf, goals@(nextGoal@(Struct "=" [l,r]):gs)) stack = do
+            (fact:_) -> local (abolish fact) $ resolve' wildN depth (1:path, usf, gs) stack
+      resolve' wildN depth (path, usf, goals@(nextGoal@(Struct "=" [l,r]):gs)) stack = do
          -- This special case is here to avoid introducing unnecessary
          -- variables that occur when applying "X=X." as a rule.
          trace "=== resolve' (=/2) ==="
@@ -227,12 +241,12 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
 
          createConnections (path, usf, nextGoal:gs) bs branches
 
-         choose depth (path,usf,gs) branches stack
+         choose wildN depth (path,usf,gs) branches stack
 
         where
          shiftCut (Cut n) = Cut (succ n)
          shiftCut t       = t
-      resolve' depth (path, usf, nextGoal:gs) stack = do
+      resolve' wildN depth (path, usf, nextGoal:gs) stack = do
          trace "=== resolve' ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -241,7 +255,7 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
          let sig = signature nextGoal
          whenPredicateIsUnknown sig $ do
             throwError $ strMsg $ "Unknown predicate: " ++ show sig
-         bs <- getProtoBranches -- Branch generation happens in two phases so visualizers can pick what to display.
+         (newWildN, bs) <- getProtoBranches -- Branch generation happens in two phases so visualizers can pick what to display.
          let branches = do
                (p, u, newGoals) <- bs
                let u' = usf +++ u
@@ -251,35 +265,43 @@ resolve_ program goals = map cleanup <$> runReaderT (resolve' 1 (root, [], goals
 
          createConnections (path, usf, nextGoal:gs) bs branches
 
-         choose depth (path,usf,gs) branches stack
+         choose newWildN depth (path,usf,gs) branches stack
        where
          getProtoBranches = do
             clauses <- asks (getClauses nextGoal)
-            return $ do
-               (i,clause) <- zip [1..] $ renameVars clauses
-               u <- unify (apply usf nextGoal) (lhs clause)
-               return (i:path, u, rhs clause (map snd u))
-
+            let (clauses', newWildN) = renameVars clauses
+            let l = do
+                     (i,clause) <- zip [1..] clauses'
+                     u <- unify (apply usf nextGoal) (lhs clause)
+                     return (i:path, u, rhs clause (map snd u))
+            return (newWildN, l)
 
          shiftCut (Cut n) = Cut (succ n)
          shiftCut t       = t
 
-         renameVars = everywhere $ mkT $ \(VariableName _ v) -> VariableName depth v
+         renameVars :: [Clause] -> ([Clause],Int)
+         renameVars cs = flip runState wildN $ everywhereM (mkM rename) cs
+         rename :: VariableName -> State Int VariableName
+         rename (VariableName _ v) = pure $ VariableName depth v
+         rename (Wildcard _) = do
+           n <- get
+           modify (+1)
+           pure $ Wildcard (Just n)
 
-      choose depth _           []              stack = backtrack depth stack
-      choose depth (path,u,gs) ((path',u',gs'):alts) stack = do
+      choose wildN depth _           []              stack = backtrack wildN depth stack
+      choose wildN depth (path,u,gs) ((path',u',gs'):alts) stack = do
          trace "=== choose ==="
          trace_ "Depth"   depth
          trace_ "Unif."   u
          trace_ "Goals"   gs
          mapM_ (trace_ "Alt.") ((path',u',gs'):alts)
          mapM_ (trace_ "Stack") stack
-         resolve' (succ depth) (path',u',gs') (((path,u,gs),alts) : stack)
+         resolve' wildN (succ depth) (path',u',gs') (((path,u,gs),alts) : stack)
 
-      backtrack _     [] = do
+      backtrack wildN _     [] = do
          trace "=== give up ==="
          return (fail "Goal cannot be resolved!")
-      backtrack depth (((path,u,gs),alts):stack) = do
+      backtrack wildN depth (((path,u,gs),alts):stack) = do
          trace "=== backtrack ==="
          -- depth is not adjusted correctly if choice-points have been cut
-         choose (pred depth) (path,u,gs) alts stack
+         choose wildN (pred depth) (path,u,gs) alts stack

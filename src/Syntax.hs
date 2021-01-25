@@ -3,6 +3,7 @@ module Syntax
    ( Term(..), var, cut
    , Clause(..), rhs
    , VariableName(..), Atom, Goal, Program
+   , newWildcard
    , cons, nil, foldr_pl
    , arguments -- FIXME Should not be exposed
    , hierarchy
@@ -17,7 +18,6 @@ import Data.Char (isLetter)
 
 data Term = Struct Atom [Term]
           | Var VariableName
-          | Wildcard
           | Cut Int
       deriving (Eq, Data, Typeable)
 var = Var . VariableName 0
@@ -29,8 +29,12 @@ data Clause = Clause { lhs :: Term, rhs_ :: [Goal] }
 rhs (Clause   _ rhs) = const rhs
 rhs (ClauseFn _ fn ) = fn
 
-data VariableName = VariableName Int String
-      deriving (Eq, Data, Typeable, Ord)
+data VariableName
+  = VariableName Int String
+  | Wildcard (Maybe Int)
+  deriving (Eq, Data, Typeable, Ord)
+
+newWildcard = Wildcard Nothing
 
 type Atom         = String
 type Goal         = Term
@@ -45,10 +49,10 @@ infixr 4 <=!
 (q <=! _) _ (q->Just _) = False
 (_ <=! c) x y = c x y
 
-wildcards Wildcard = Just ()
+wildcards (Var (Wildcard i)) = Just i
 wildcards _        = Nothing
 
-variables (Var v) = Just v
+variables (Var v@(VariableName _ _)) = Just v
 variables _       = Nothing
 
 numbers (Struct (reads->[(n :: Integer,"")]) []) = Just n
@@ -91,7 +95,7 @@ prettyPrint _ _ t@(Struct "." [_,_]) =
 prettyPrint _ _ (Struct a [])   = a
 prettyPrint _ _ (Struct a ts)   = a ++ "(" ++ intercalate ", " (map (prettyPrint True 0) ts) ++ ")"
 prettyPrint _ _ (Var v)         = show v
-prettyPrint _ _ Wildcard        = "_"
+-- prettyPrint _ _ Wildcard        = "_"
 prettyPrint _ _ (Cut _)         = "!"
 --prettyPrint _ _ ((==cut)->True) = "!"
 --prettyPrint _ _ (Cut n)         = "!^" ++ show n
@@ -117,6 +121,8 @@ operatorTable = concat $ zipWith (map . g) [1..] $ hierarchy False
 instance Show VariableName where
    show (VariableName 0 v) = v
    show (VariableName i v) = v ++ "#" ++  show i
+   show (Wildcard (Just i)) = "_" ++  show i
+   show (Wildcard Nothing) = "_?"
 
 instance Show Clause where
    show (Clause   lhs [] ) = show $ show lhs
