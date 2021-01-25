@@ -154,5 +154,3 @@ representChar c = Struct (show (fromEnum c)) [] -- This is the classical Prolog 
 --toChar :: Term -> Maybe Char
 --toChar (Struct "char" [Struct (toEnum . read->c) []]) = Just c
 --toChar _                                              = Nothing
-
--- The parser
