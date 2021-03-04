@@ -1,5 +1,5 @@
 name:                prolog
-version:             0.4.0
+version:             0.4.1
 synopsis:            A Prolog interpreter written in Haskell.
 description:         A Prolog interpreter written in Haskell. Implements a subset of the Prolog language.
 license:             PublicDomain
@@ -15,6 +15,7 @@ dependencies:
   - syb >= 0.3
   - mtl >= 2.0.1.0
   - containers
+  - pipes
 
   - template-haskell
   - th-lift >=0.5.3

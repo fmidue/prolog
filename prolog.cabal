@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 883748c33d601581d684077f8442b83df1e09f76b5a6d5c2e92c256ec5afcfbc
+-- hash: 947693c1ecc33180ac9ff5ec69a4ba6eb90ba4efe5a9c172e17c09998ef637c4
 
 name:           prolog
-version:        0.4.0
+version:        0.4.1
 synopsis:       A Prolog interpreter written in Haskell.
 description:    A Prolog interpreter written in Haskell. Implements a subset of the Prolog language.
 category:       Language
@@ -44,6 +44,7 @@ library
     , containers
     , mtl >=2.0.1.0
     , parsec >=3.1.1
+    , pipes
     , syb >=0.3
     , template-haskell
     , th-lift >=0.5.3
@@ -67,6 +68,7 @@ test-suite spec
     , filepath
     , mtl >=2.0.1.0
     , parsec >=3.1.1
+    , pipes
     , prolog
     , syb >=0.3
     , template-haskell
@@ -88,6 +90,7 @@ benchmark bench
     , deepseq
     , mtl >=2.0.1.0
     , parsec >=3.1.1
+    , pipes
     , prolog
     , syb >=0.3
     , template-haskell
