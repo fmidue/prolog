@@ -8,7 +8,7 @@ module Prolog
    , withTrace
    , MonadGraphGen(..)
    , runNoGraphT
-   , resolve, resolve_
+   , resolve, resolve_, resolveN, resolveN_, resolveP
    , (+++)
    , consult, consultString, parseQuery
    , program, whitespace, clause, terms, term, bottom, vname
