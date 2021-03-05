@@ -5,7 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 module Interpreter
-   ( resolve, resolve_, resolveN, resolveP
+   ( resolve, resolve_, resolveN, resolveN_, resolveP
    , MonadTrace(..), withTrace
    , MonadGraphGen(..), runNoGraphT
    )
@@ -152,7 +152,10 @@ resolve_ :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) 
 resolve_ program goals = runEffect $ resolveP program goals >-> Pipes.drain
 
 resolveN :: (Functor m, MonadTrace m, Error e, MonadError e m) => Int -> Program -> [Goal] -> m [Unifier]
-resolveN n program goals = runNoGraphT $ Pipes.toListM $  Pipes.take n <-< (() <$ resolveP program goals)
+resolveN n program goals = runNoGraphT $ resolveN_ n program goals
+
+resolveN_ :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) => Int -> Program -> [Goal] -> m [Unifier]
+resolveN_ n program goals = Pipes.toListM $  Pipes.take n <-< (() <$ resolveP program goals)
 
 resolveP :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) => Program -> [Goal] ->  Producer Unifier m [Unifier]
 -- Yield all unifiers that resolve <goal> using the clauses from <program>.
