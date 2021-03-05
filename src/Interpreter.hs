@@ -124,11 +124,6 @@ class Monad m => MonadGraphGen m where
    markSolution :: Unifier -> m ()
    markCutBranches :: Stack -> m ()
 
--- instance MonadGraphGen m => MonadGraphGen (ReaderT r m) where
---    createConnections x y z = lift (createConnections x y z)
---    markSolution = lift . markSolution
---    markCutBranches = lift . markCutBranches
-
 instance (MonadTrans t, Monad (t m), MonadGraphGen m) => MonadGraphGen (t m) where
    createConnections x y z = lift (createConnections x y z)
    markSolution = lift . markSolution
@@ -157,7 +152,7 @@ resolve_ :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) 
 resolve_ program goals = runEffect $ resolveP program goals >-> Pipes.drain
 
 resolveN :: (Functor m, MonadTrace m, Error e, MonadError e m) => Int -> Program -> [Goal] -> m [Unifier]
-resolveN n program goals = runNoGraphT $ Pipes.toListM $  Pipes.take n <-< (() <$ resolve_ program goals)
+resolveN n program goals = runNoGraphT $ Pipes.toListM $  Pipes.take n <-< (() <$ resolveP program goals)
 
 resolveP :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) => Program -> [Goal] ->  Producer Unifier m [Unifier]
 -- Yield all unifiers that resolve <goal> using the clauses from <program>.
