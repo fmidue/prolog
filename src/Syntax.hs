@@ -122,7 +122,7 @@ instance Show VariableName where
    show (VariableName 0 v) = v
    show (VariableName i v) = v ++ "#" ++  show i
    show (Wildcard (Just i)) = "_" ++  show i
-   show (Wildcard Nothing) = "_?"
+   show (Wildcard Nothing) = "_"
 
 instance Show Clause where
    show (Clause   lhs [] ) = show $ show lhs
