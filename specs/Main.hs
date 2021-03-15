@@ -1,5 +1,7 @@
+{-# LANGUAGE TypeApplications #-}
 module Main (main) where
 
+import Data.Either (isLeft)
 import Control.Applicative ((<*),(<*>),(<$>))
 import Control.Monad (forM)
 import System.Directory
@@ -10,7 +12,7 @@ import System.Environment (getArgs)
 import Test.HUnit
 import Text.Parsec
 
-import Language.Prolog (vname, term, bottom, whitespace, resolve, consult)
+import Language.Prolog (vname, term, bottom, whitespace, resolve, consult, Program)
 
 
 main = do
@@ -21,13 +23,12 @@ main = do
     let fixture = replaceExtension fname ".pl"
     hasFixture <- doesFileExist fixture
     p <- if hasFixture
-            then do Right p <- consult fixture
-                    return p
-            else return []
+            then consult fixture
+            else return $ Right []
     text <- readFile fname
-    case parse (specFile p) fname text of
+    case parse specFile fname text of
       Left err -> return (dropExtension fname ~: (assertFailure (show err) :: IO ()))
-      Right tests -> return (dropExtension fname ~: tests)
+      Right tests -> return (dropExtension fname ~: tests p)
   colorizeResult =<< runTestTT (test tests)
 
 colorizeResult result = do
@@ -40,12 +41,15 @@ colorizeResult result = do
   putStrLn ""
 
 
-specFile p = testSpec p `sepBy` newline <* eof
+specFile :: Parsec String () (Either ParseError Program -> [Test])
+specFile = (pure . ("parsing should fail" ~:) . (@?= True) . isLeft) <$ try (string "syntax error")
+        <|> (\specs -> pure $ either (pure . ("" ~:) . assertFailure @(IO ()) . show) (\p -> map ($ p) specs)) =<< (testSpec `sepBy` newline <* eof)
 
-testSpec p = do
+testSpec :: Parsec String () (Program -> Test)
+testSpec = do
   q  <- string "?-" >> whitespace >> term <* string "." <* newline
   us <- unifiers <* optional (whitespace >> string ";" >> newline >> string "false") <* string "." <* ((newline >> return ()) <|> eof)
-  return $ "?- " ++ show q ++ "." ~: resolve p [q] >>= (@?= us)
+  return $ \p -> "?- " ++ show q ++ "." ~: resolve p [q] >>= (@?= us)
 
 unifiers =  (unifier `sepBy1` (try $ string ";" <* newline >> notFollowedBy (string "false.")))
         <|> (string "false" >> return [])

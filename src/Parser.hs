@@ -107,7 +107,7 @@ operatorLiteral = Struct <$> operator <*> pure []
 
 list = brackets $ do
   hds <- option [] $ commaSep1 termWithoutConjunction
-  tl <- option nil (charWs '|' >> term)
+  tl <- option nil (charWs '|' >> termWithoutConjunction)
   return $ foldr cons tl hds
 
 number = do
