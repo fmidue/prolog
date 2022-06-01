@@ -125,9 +125,9 @@ instance Show VariableName where
    show (Wildcard Nothing) = "_"
 
 instance Show Clause where
-   show (Clause   lhs [] ) = show $ show lhs
-   show (Clause   lhs rhs) = show $ show lhs ++ " :- " ++ intercalate ", " (map show rhs)
-   show (ClauseFn lhs _  ) = show $ show lhs ++ " :- " ++ "<Haskell function>"
+   show (Clause   lhs [] ) = show lhs ++ "."
+   show (Clause   lhs rhs) = show lhs ++ " :- " ++ intercalate ", " (map show rhs) ++ "."
+   show (ClauseFn lhs _  ) = show lhs ++ " :- " ++ "<Haskell function>" ++ "."
 
 
 
