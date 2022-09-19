@@ -19,7 +19,7 @@ import Prolog ( Term(..), VariableName, Clause(..), Goal
 $(deriveLiftMany [''Term, ''VariableName, ''Clause])
 
 instance Lift ([Term] -> [Goal]) where
-   lift _ = fail "Clauses using Haskell functions can't be lifted."
+   lift _ = error "Clauses using Haskell functions can't be lifted."
 
 
 t  = prologQuasiQuoter term    "term"
