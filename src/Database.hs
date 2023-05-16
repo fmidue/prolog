@@ -6,6 +6,7 @@ module Database
    , assertz
    , abolish
    , Signature(), signature
+   , Database
    )
 where
 

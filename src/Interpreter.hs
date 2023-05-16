@@ -4,6 +4,7 @@
 {-# LANGUAGE IncoherentInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Interpreter
    ( resolve, resolve_, resolveN, resolveN_, resolveP
    , MonadTrace(..), withTrace
@@ -13,7 +14,7 @@ where
 import Control.Monad.Reader
 import Control.Monad.Writer
 import Control.Monad.State
-import Control.Monad.Error
+import Control.Monad.Except
 import Data.Maybe (isJust)
 import Data.Generics (everywhere, mkT, everywhereM, mkM)
 import Control.Applicative ((<$>),(<*>),(<$),(<*), Applicative(..), Alternative)
@@ -110,6 +111,8 @@ instance MonadTrace IO where
    trace _ = return ()
 instance MonadTrace (Either err) where
    trace _ = return ()
+instance Monad m => MonadTrace (WriterT Error m) where
+   trace = tell . (++ "\n")
 instance (MonadTrace m, MonadTrans t, Monad (t m)) => MonadTrace (t m) where
    trace x = lift (trace x)
 
@@ -145,19 +148,21 @@ type Branch = (Path, Unifier, [Goal])
 type Path = [Integer] -- Used for generating graph output
 root = [] :: Path
 
-resolve :: (Functor m, MonadTrace m, Error e, MonadError e m) => Program -> [Goal] -> m [Unifier]
+type Error = String
+
+resolve :: (Functor m, MonadTrace m, MonadError Error m) => Program -> [Goal] -> m [Unifier]
 resolve program goals = runNoGraphT $ resolve_ program goals
 
-resolve_ :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) => Program -> [Goal] ->  m [Unifier]
+resolve_ :: (Functor m, MonadTrace m, MonadError Error m, MonadGraphGen m) => Program -> [Goal] ->  m [Unifier]
 resolve_ program goals = runEffect $ resolveP program goals >-> Pipes.drain
 
-resolveN :: (Functor m, MonadTrace m, Error e, MonadError e m) => Int -> Program -> [Goal] -> m [Unifier]
+resolveN :: (Functor m, MonadTrace m, MonadError Error m) => Int -> Program -> [Goal] -> m [Unifier]
 resolveN n program goals = runNoGraphT $ resolveN_ n program goals
 
-resolveN_ :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) => Int -> Program -> [Goal] -> m [Unifier]
+resolveN_ :: (Functor m, MonadTrace m, MonadError Error m, MonadGraphGen m) => Int -> Program -> [Goal] -> m [Unifier]
 resolveN_ n program goals = Pipes.toListM $  Pipes.take n <-< (() <$ resolveP program goals)
 
-resolveP :: (Functor m, MonadTrace m, Error e, MonadError e m, MonadGraphGen m) => Program -> [Goal] ->  Producer Unifier m [Unifier]
+resolveP :: forall m. (Monad m, MonadTrace m, MonadError Error m, MonadGraphGen m) => Program -> [Goal] -> Producer Unifier m [Unifier]
 -- Yield all unifiers that resolve <goal> using the clauses from <program>.
 resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [], goals') []) (createDB (builtins ++ program) ["false","fail"])   -- NOTE Is it a good idea to "hardcode" the builtins like this?
   where
@@ -175,6 +180,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
       whenPredicateIsUnknown sig action = asks (hasPredicate sig) >>= flip unless action
 
       -- resolve' :: Int -> Int -> Unifier -> [Goal] -> Stack -> m [Unifier]
+      resolve' :: Int -> Int -> Branch -> Stack -> ReaderT Database (Producer Unifier m) [Unifier]
       resolve' wildN depth (path, usf, []) stack = do
          trace "=== yield solution ==="
          trace_ "Depth" depth
@@ -268,7 +274,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
          mapM_ (trace_ "Stack") stack
          let sig = signature nextGoal
          whenPredicateIsUnknown sig $ do
-            throwError $ strMsg $ "Unknown predicate: " ++ show sig
+            throwError $ "Unknown predicate: " ++ show sig
          (newWildN, bs) <- getProtoBranches -- Branch generation happens in two phases so visualizers can pick what to display.
          let branches = do
                (p, u, newGoals) <- bs

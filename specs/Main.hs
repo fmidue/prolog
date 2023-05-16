@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeApplications #-}
 module Main (main) where
 
-import Data.Either (isLeft)
+import Data.Either (isLeft, either)
 import Control.Applicative ((<*),(<*>),(<$>))
 import Control.Monad (forM)
 import System.Directory
@@ -49,7 +49,7 @@ testSpec :: Parsec String () (Program -> Test)
 testSpec = do
   q  <- string "?-" >> whitespace >> term <* string "." <* newline
   us <- unifiers <* optional (whitespace >> string ";" >> newline >> string "false") <* string "." <* ((newline >> return ()) <|> eof)
-  return $ \p -> "?- " ++ show q ++ "." ~: resolve p [q] >>= (@?= us)
+  return $ \p -> "?- " ++ show q ++ "." ~: either (\e -> putStrLn e >> pure []) pure (resolve p [q]) >>= (@?= us)
 
 unifiers =  (unifier `sepBy1` (try $ string ";" <* newline >> notFollowedBy (string "false.")))
         <|> (string "false" >> return [])

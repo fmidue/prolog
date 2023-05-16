@@ -22,6 +22,7 @@ import Unifier
 import Interpreter
 
 import Control.Monad.IO.Class
+import Control.Monad.Trans.Writer
 
 runQuery :: Maybe FilePath -> String -> IO [Unifier]
 runQuery = runQuery' NoTracing
@@ -37,16 +38,18 @@ runQuery' t mFile qstr = do
     Right p -> do
       case parseQuery qstr of
         Right q -> case t of
-          Tracing -> withTrace $ resolve p q
-          NoTracing -> resolve p q
+          Tracing -> case runWriterT $ resolve p q of
+            Left e -> printError e
+            Right (u,t) -> putStrLn t >> pure u
+          NoTracing -> case resolve p q of
+            Left e -> printError e
+            Right u -> pure u
         Left err -> do
           putStrLn "error parsing query:"
-          print err
-          pure []
+          printError $ show err
     Left err -> do
       putStrLn "error parsing file:"
-      print err
-      pure []
+      printError $ show err
 
 runQueryN :: Int -> Maybe FilePath -> String -> IO [Unifier]
 runQueryN = runQueryN' NoTracing
@@ -60,13 +63,18 @@ runQueryN' t n mFile qstr = do
     Right p -> do
       case parseQuery qstr of
         Right q -> case t of
-          Tracing -> withTrace $ resolveN n p q
-          NoTracing -> resolveN n p q
+          Tracing -> case runWriterT $ resolveN n p q of
+            Left e -> printError e
+            Right (u,t) -> putStrLn t >> pure u
+          NoTracing -> case resolveN n p q of
+            Left e -> printError e
+            Right u -> pure u
         Left err -> do
           putStrLn "error parsing query:"
-          print err
-          pure []
+          printError $ show err
     Left err -> do
       putStrLn "error parsing file:"
-      print err
-      pure []
+      printError $ show err
+
+printError :: Monoid a => String -> IO a
+printError err = putStrLn err >> mempty
