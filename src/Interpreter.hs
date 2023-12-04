@@ -268,7 +268,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
         where
          shiftCut (Cut n) = Cut (succ n)
          shiftCut t       = t
-      resolve' wildN depth (path, usf, nextGoal@(Var i):gs) stack = throwError "resolve': Variables are not supported as goals"
+      resolve' wildN depth (path, usf, nextGoal@(Var i):gs) stack = throwError "Variables are not supported as goals"
       resolve' wildN depth (path, usf, nextGoal:gs) stack = do
          trace "=== resolve' ==="
          trace_ "Depth"   depth
