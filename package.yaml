@@ -21,6 +21,10 @@ dependencies:
   - th-lift >=0.5.3
   - transformers >=0.2.2.0
 
+ghc-options:
+  - -Wall
+  - -Wincomplete-uni-patterns
+
 library:
   source-dirs: src
   exposed-modules:

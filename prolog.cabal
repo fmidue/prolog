@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9492ca3b14c447a6235f420ede4eee71b90fe723c02e443eed32bb86575dbd6f
+-- hash: 4588587a1171baf6d6a359fc1a2b3bdc4d10dfe2df6040395d21904e6bee3c64
 
 name:           prolog
 version:        0.4.2
@@ -39,6 +39,7 @@ library
       Paths_prolog
   hs-source-dirs:
       src
+  ghc-options: -Wall -Wincomplete-uni-patterns
   build-depends:
       base ==4.*
     , containers
@@ -57,7 +58,7 @@ executable prolog-interpreter
       Paths_prolog
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
+  ghc-options: -Wall -Wincomplete-uni-patterns -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       base ==4.*
     , containers
@@ -79,7 +80,7 @@ test-suite spec
       Paths_prolog
   hs-source-dirs:
       specs
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
+  ghc-options: -Wall -Wincomplete-uni-patterns -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       HUnit
     , ansi-terminal
@@ -104,7 +105,7 @@ benchmark bench
       Paths_prolog
   hs-source-dirs:
       bench
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
+  ghc-options: -Wall -Wincomplete-uni-patterns -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       base ==4.*
     , containers
