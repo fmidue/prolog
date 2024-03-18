@@ -57,7 +57,11 @@ runMain file = do
 
 printUnifiers :: [Unifier] -> String
 printUnifiers [] = "false.\n"
-printUnifiers us = unlines [ intercalate ",\n" (map printSubst u) ++ ".\n"| u <- us ]
+printUnifiers us = unlines [ printUnifier u | u <- us ]
   where
+    printUnifier :: Unifier -> String
+    printUnifier [] = "true."
+    printUnifier u = intercalate ",\n" (map printSubst u) ++ "."
+
     printSubst :: (VariableName, Term) -> String
     printSubst (x,t) = unwords [show x, "=", show t]
