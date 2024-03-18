@@ -24,6 +24,8 @@ dependencies:
 ghc-options:
   - -Wall
   - -Wincomplete-uni-patterns
+  - -Werror=incomplete-uni-patterns
+  - -Werror=incomplete-patterns
 
 library:
   source-dirs: src

@@ -62,3 +62,4 @@ parsePrologPat :: (Data a, Lift a) => Parser a -> String -> String -> Q Pat
 parsePrologPat parser name str = do
    case parse (whitespace >> parser <* eof) ("(Prolog " ++ name ++ " pattern)") str of
       Right x -> viewP [e| (== $(lift x)) |] [p| True |]
+      Left err -> error $ show err

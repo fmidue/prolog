@@ -132,8 +132,12 @@ instance Show Clause where
 
 
 
+foldr_pl :: (Term -> a -> a) -> a -> Term -> a
 foldr_pl f k (Struct "." [h,t]) = f h (foldr_pl f k t)
 foldr_pl _ k (Struct "[]" [])   = k
+foldr_pl _ _ Struct{}   = error "foldr_pl: not a prolog list"
+foldr_pl _ _ Var{}   = error "foldr_pl: not a prolog list"
+foldr_pl _ _ Cut{}   = error "foldr_pl: not a prolog list"
 
 cons t1 t2 = Struct "."  [t1,t2]
 nil        = Struct "[]" []

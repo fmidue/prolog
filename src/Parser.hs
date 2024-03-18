@@ -33,17 +33,23 @@ clause = do t <- struct <* whitespace
       dcg t = do
             reservedOp "-->" <* whitespace
             ts <- terms
-            return (translate (t,ts))
+            case translate (t,ts) of
+              Just x -> return x
+              Nothing -> parserFail "unexpected syntax in dcg-rule"
 
-      translate ((Struct a ts), rhs) =
+      translate (Struct a ts, rhs) =
          let lhs' = Struct a (arguments ts (head vars) (last vars))
              vars = map (var.("d_"++).(a++).show) [0..length rhs] -- We explicitly choose otherwise invalid variable names
-             rhs' = zipWith3 translate' rhs vars (tail vars)
-         in Clause lhs' rhs'
+             rhs' = sequenceA $ zipWith3 translate' rhs vars (tail vars)
+         in Clause lhs' <$> rhs'
+      translate (Var _, _) = Nothing
+      translate (Cut _, _) = Nothing
 
-      translate' t s s0 | isList t   = Struct "=" [ s, foldr_pl cons s0 t ]     -- Terminal
-      translate' t@(Struct "{}" ts) s s0 = foldr and (Struct "=" [ s, s0 ]) ts  -- Braced terms
-      translate' (Struct a ts)  s s0 = Struct a (arguments ts s s0)             -- Non-Terminal
+      translate' t s s0 | isList t   = Just $ Struct "=" [ s, foldr_pl cons s0 t ]     -- Terminal
+      translate' t@(Struct "{}" ts) s s0 = Just $ foldr and (Struct "=" [ s, s0 ]) ts  -- Braced terms
+      translate' (Struct a ts)  s s0 = Just $ Struct a (arguments ts s s0)             -- Non-Terminal
+      translate' (Var _) _ _ = Nothing
+      translate' (Cut _) _ _ = Nothing
 
       and x y = Struct "," [x,y]
 

@@ -5,7 +5,7 @@ module Database
    , asserta
    , assertz
    , abolish
-   , Signature(), signature
+   , Signature(), termSignature
    , Database
    )
 where
@@ -14,14 +14,17 @@ import Data.Map (Map)
 import qualified Data.Map.Strict as Map
 
 import Syntax
+import Data.Maybe (fromMaybe)
 
 
 data Signature = Signature Atom Int deriving (Ord, Eq)
 instance Show Signature where
    show (Signature name arity) = name ++ "/" ++ show arity
 
-signature :: Term -> Signature
-signature (Struct name ts) = Signature name (length ts)
+termSignature :: Term -> Maybe Signature
+termSignature (Struct name ts) = Just $ Signature name (length ts)
+termSignature (Var _) = Nothing
+termSignature (Cut _) = Nothing
 
 
 newtype Database = DB (Map Signature [Clause])
@@ -29,16 +32,16 @@ newtype Database = DB (Map Signature [Clause])
 hasPredicate sig (DB index) = Map.member sig index
 
 createDB clauses emptyPredicates = DB $
-   foldr (\clause -> Map.insertWith (++) (signature (lhs clause)) [clause])
-         (Map.fromList [ (signature (Struct name []), []) | name <- emptyPredicates ])
+   foldr (\clause -> maybe id (\sig -> Map.insertWith (++) sig [clause]) (termSignature (lhs clause)))
+         (Map.fromList [ (Signature name 0, []) | name <- emptyPredicates ])
          clauses
 
-getClauses term (DB index) = maybe [] id $ Map.lookup (signature term) index
+getClauses term (DB index) = fromMaybe [] $ (`Map.lookup` index) =<< termSignature term
 
 
-asserta fact (DB index) = DB $ Map.insertWith (++)        (signature fact) [Clause fact []] index
-assertz fact (DB index) = DB $ Map.insertWith (flip (++)) (signature fact) [Clause fact []] index
-abolish fact (DB index) = DB $ Map.adjust deleteFact (signature fact) index
+asserta fact (DB index) = DB $ maybe index (\sig -> Map.insertWith (++)        sig [Clause fact []] index) (termSignature fact)
+assertz fact (DB index) = DB $ maybe index (\sig -> Map.insertWith (flip (++)) sig [Clause fact []] index) (termSignature fact)
+abolish fact (DB index) = DB $ maybe index (\sig -> Map.adjust deleteFact sig index) (termSignature fact)
    where deleteFact (Clause t []:cs) | t == fact = cs
          deleteFact (_          :cs)             = cs
          deleteFact []                           = []

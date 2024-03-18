@@ -55,7 +55,7 @@ builtins =
    , ClauseFn (Struct "@=<"[var "T1", var "T2"]) (binaryPredicate (<=))
    , ClauseFn (Struct "@>="[var "T1", var "T2"]) (binaryPredicate (>=))
    , ClauseFn (Struct "==" [var "T1", var "T2"]) (binaryPredicate (==))
-   , ClauseFn (Struct "sort" [var "Input", var "Output"]) (function sort_pl)
+   , builtinSort
    , ClauseFn (Struct "=.." [var "Term", var "List"]) univ
    , ClauseFn (Struct "atom" [var "T"]) atom
    , ClauseFn (Struct "char_code" [var "Atom", var "Code"]) char_code
@@ -100,10 +100,13 @@ builtins =
    char_code [t, Struct (reads->[(n,"")]) []] = [Struct "=" [t, Struct [toEnum n] []]]
    char_code _                                = [Struct "false" []]
 
-   function :: (Term -> Term) -> ([Term] -> [Goal])
-   function f [input, output] = [Struct "=" [output, f input]]
 
-   sort_pl = foldr cons nil . nub . sort . foldr_pl (:) []
+   builtinSort = ClauseFn (Struct "sort" [var "Input", var "Output"]) (function sort_pl)
+    where
+      sort_pl = foldr cons nil . nub . sort . foldr_pl (:) []
+      function :: (Term -> Term) -> ([Term] -> [Goal])
+      function f [input, output] = [Struct "=" [output, f input]]
+      function _ _ = error "impossible"
 
 class Monad m => MonadTrace m where
    trace :: String -> m ()
@@ -174,6 +177,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
         n <- get
         modify (+1)
         pure $ Wildcard (Just n)
+      renameW w@(Wildcard (Just _)) = pure w
       renameW v@(VariableName _ _) = pure v
       cleanup = filter (queryVarialbes . fst)
       queryVarialbes (VariableName i _) = i == 0
@@ -275,7 +279,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
          trace_ "Unif."   usf
          trace_ "Goals"   (nextGoal:gs)
          mapM_ (trace_ "Stack") stack
-         let sig = signature nextGoal
+         sig <- maybe (throwError $ "Goal without signature: " ++ show nextGoal) pure $ termSignature nextGoal
          whenPredicateIsUnknown sig $ do
             throwError $ "Unknown predicate: " ++ show sig
          (newWildN, bs) <- getProtoBranches -- Branch generation happens in two phases so visualizers can pick what to display.
