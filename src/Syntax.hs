@@ -161,6 +161,7 @@ hierarchy ignoreConjunction =
    , [ infixL "*"]
    , [ infixL "mod" ]
    , [ infixL "div" ]
+   , [ infixL "^", infixL "**"]
    , [ prefix "-" ]
    , [ prefix "$" ] -- used for quasi quotation
    ]

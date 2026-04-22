@@ -87,6 +87,8 @@ builtins =
    eval (Struct "-" [t1, t2])   = (-) <$> eval t1 <*> eval t2
    eval (Struct "mod" [t1, t2]) = mod <$> eval t1 <*> eval t2
    eval (Struct "div" [t1, t2]) = div <$> eval t1 <*> eval t2
+   eval (Struct s [t1, t2])
+     | s `elem` ["^", "**"]     = (^) <$> eval t1 <*> eval t2
    eval (Struct "-" [t])        = negate <$> eval t
    eval _                       = mzero
 
