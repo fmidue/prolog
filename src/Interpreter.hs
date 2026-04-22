@@ -59,6 +59,7 @@ builtins =
    , ClauseFn (Struct "=.." [var "Term", var "List"]) univ
    , ClauseFn (Struct "atom" [var "T"]) atom
    , ClauseFn (Struct "char_code" [var "Atom", var "Code"]) char_code
+   , ClauseFn (Struct "number" [var "N"]) number
    , Clause (Struct "phrase" [var "RuleName", var "InputList"])
                [Struct "phrase" [var "RuleName", var "InputList", Struct "[]" []]]
    , Clause (Struct "phrase" [var "Rule", var "InputList", var "Rest"])
@@ -100,6 +101,8 @@ builtins =
    char_code [t, Struct (reads->[(n,"")]) []] = [Struct "=" [t, Struct [toEnum n] []]]
    char_code _                                = [Struct "false" []]
 
+   number [Struct (reads -> [(_ :: Integer, "")]) []] = []
+   number _                                           = [Struct "false" []]
 
    builtinSort = ClauseFn (Struct "sort" [var "Input", var "Output"]) (function sort_pl)
     where
