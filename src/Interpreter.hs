@@ -59,7 +59,7 @@ builtins =
    , ClauseFn (Struct "=.." [var "Term", var "List"]) univ
    , ClauseFn (Struct "atom" [var "T"]) atom
    , ClauseFn (Struct "char_code" [var "Atom", var "Code"]) char_code
-   , ClauseFn (Struct "number" [var "N"]) number
+   , ClauseFn (Struct "number" [var "T"]) number
    , Clause (Struct "phrase" [var "RuleName", var "InputList"])
                [Struct "phrase" [var "RuleName", var "InputList", Struct "[]" []]]
    , Clause (Struct "phrase" [var "Rule", var "InputList", var "Rest"])
