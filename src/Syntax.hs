@@ -13,7 +13,7 @@ where
 
 import Data.Generics (Data(..), Typeable(..))
 import Data.List (intercalate)
-import Data.Char (isLetter)
+import Data.Char (digitToInt, isLetter)
 
 
 data Term = Struct Atom [Term]
@@ -120,7 +120,7 @@ operatorTable = concat $ zipWith (map . g) [1..] $ hierarchy False
 
 instance Show VariableName where
    show (VariableName 0 v) = v
-   show (VariableName i v) = v ++ "#" ++  show i
+   show (VariableName i v) = v ++ subscriptDigits i
    show (Wildcard (Just i)) = "_" ++  show i
    show (Wildcard Nothing) = "_"
 
@@ -176,3 +176,19 @@ hierarchy ignoreConjunction =
 
 arguments ts xs ds = ts ++ [ xs, ds ]
 -- arguments ts xs ds = [ xs \\ ds ] ++ ts
+
+
+subscriptDigits :: Int -> String
+subscriptDigits 0 = "₀"
+subscriptDigits 1 = "₁"
+subscriptDigits 2 = "₂"
+subscriptDigits 3 = "₃"
+subscriptDigits 4 = "₄"
+subscriptDigits 5 = "₅"
+subscriptDigits 6 = "₆"
+subscriptDigits 7 = "₇"
+subscriptDigits 8 = "₈"
+subscriptDigits 9 = "₉"
+subscriptDigits i
+  | i < 0     = error "negative number in identifier subscript"
+  | otherwise = concatMap (subscriptDigits . digitToInt) $ show i
