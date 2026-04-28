@@ -13,7 +13,7 @@ where
 
 import Data.Generics (Data(..), Typeable(..))
 import Data.List (intercalate)
-import Data.Char (digitToInt, isLetter)
+import Data.Char (digitToInt)
 
 
 data Term = Struct Atom [Term]
@@ -103,7 +103,7 @@ prettyPrint _ _ (Cut _)         = "!"
 
 spaced s = let h = head s
                l = last s
-           in spaceIf (isLetter h) ++ s ++ spaceIf (isLetter l || ',' == l)
+           in spaceIf (h `notElem` ",;") ++ s ++ spaceIf (l /= ';')
 
 spaceIf True  = " "
 spaceIf False = ""
