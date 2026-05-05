@@ -26,8 +26,10 @@ clause = do t <- struct <* whitespace
             dcg t <|> normal t
    where
       normal t = do
-            ts <- option [] $ do reservedOp ":-"
-                                 terms
+            ts <- option [] $ do
+              -- custom "expecting" label to avoid showing ":-" twice
+              reservedOp ":-" <|> reservedOp ":−" <?> show ":-"
+              terms
             return (Clause t ts)
 
       dcg t = do
@@ -132,7 +134,7 @@ langProlog = P.LanguageDef
   , P.opStart = oneOf (map head operatorNames)
   , P.opLetter = oneOf "#$&@*+/<=>\\^~"--sodiv"
   , P.reservedNames = []
-  , P.reservedOpNames = [".", ":-", "|", "-->"]
+  , P.reservedOpNames = [".", ":-", ":−", "|", "-->"]
   , P.caseSensitive = True
   }
 
