@@ -28,7 +28,7 @@ runMain file = do
   case file of
     Nothing -> pure ()
     Just fname -> do
-      putStrLn $ unwords ["using definitions form", fname]
+      putStrLn $ unwords ["using definitions from", fname]
       putStrLn "changes to the file do not require reloading"
   runInputT settings (loop NoTracing)
   where
@@ -50,7 +50,7 @@ runMain file = do
           us <- lift $
             catchError
               (runQuery' traceMode file q)
-              -- simple exeption handeling (mainly to avoid crashes)
+              -- simple exception handling (mainly to avoid crashes)
               (\e -> putStrLn (displayException e) >> pure [])
           outputStr $ printUnifiers us
           loop traceMode
