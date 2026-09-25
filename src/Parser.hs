@@ -125,7 +125,7 @@ rawFunctor = rawIdentifier
          <|> rawQuotedFunctor
          <?> "functor"
 
-rawIdentifier = (:) <$> lower <*> many (alphaNum <|> char '_')
+rawIdentifier = (:) <$> lower <*> many (P.identLetter langProlog)
 
 rawOperator = choice $ map rawOperatorName sortedOperatorNames
   where
