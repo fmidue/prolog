@@ -134,7 +134,7 @@ rawOperator = choice $ map rawOperatorName sortedOperatorNames
       _ <- string name
       if all isAlpha name
          then notFollowedBy (alphaNum <|> char '_')
-         else pure ()
+         else notFollowedBy (alphaNum <|> char '_' <|> oneOf "#$&@*+/<=>\\^~")
       return name
 
 rawQuotedFunctor = between (char '\'') (char '\'') (many (noneOf "'"))
