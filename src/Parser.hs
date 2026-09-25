@@ -95,7 +95,7 @@ toParser (InfixOp assoc name) = Infix  (reservedOp name >> return (\t1 t2 -> Str
 
 charWs c = char c <* whitespace
 
-variable = (Var newWildcard <$ (lookAhead (char '_') >> identifier))
+variable = (Var newWildcard <$ char '_')
   <|> (Var <$> vname)
   <?> "variable"
 
@@ -129,7 +129,7 @@ langProlog = P.LanguageDef
   , P.commentEnd = "*/"
   , P.commentLine = "%"
   , P.nestedComments = True
-  , P.identStart = letter <|> char '_'
+  , P.identStart = letter
   , P.identLetter = letter <|> digit <|> char '_'
   , P.opStart = oneOf (map head operatorNames)
   , P.opLetter = oneOf "#$&@*+/<=>\\^~"--sodiv"
