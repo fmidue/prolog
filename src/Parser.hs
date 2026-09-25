@@ -108,10 +108,14 @@ functor = (lookAhead lower >> identifier)
    <?> "functor"
 
 struct = do
-  f <- rawFunctor
-  ts <- try (between (char '(' <* whitespace) (char ')' <* whitespace) (commaSep1 termWithoutConjunction))
-    <|> ([] <$ whitespace)
-  return (Struct f ts)
+  try structWithArgs <|> structWithoutArgs
+  where
+    structWithArgs = do
+      f <- rawFunctor
+      ts <- between (char '(' <* whitespace) (char ')' <* whitespace) (commaSep1 termWithoutConjunction)
+      return (Struct f ts)
+
+    structWithoutArgs = Struct <$> functor <*> pure []
 
 operatorLiteral = Struct <$> operator <*> pure []
 
@@ -120,7 +124,7 @@ rawFunctor = rawIdentifier
          <|> between (char '\'') (char '\'') (many (noneOf "'"))
          <?> "functor"
 
-rawIdentifier = (:) <$> lower <*> many (letter <|> digit <|> char '_')
+rawIdentifier = (:) <$> lower <*> many (alphaNum <|> char '_')
 
 rawOperator = choice $ map (try . string) sortedOperatorNames
 
