@@ -129,7 +129,7 @@ langProlog = P.LanguageDef
   , P.commentEnd = "*/"
   , P.commentLine = "%"
   , P.nestedComments = True
-  , P.identStart = letter <|> char '_'
+  , P.identStart = letter
   , P.identLetter = letter <|> digit <|> char '_'
   , P.opStart = oneOf (map head operatorNames)
   , P.opLetter = oneOf "#$&@*+/<=>\\^~"--sodiv"
