@@ -95,7 +95,7 @@ toParser (InfixOp assoc name) = Infix  (reservedOp name >> return (\t1 t2 -> Str
 
 charWs c = char c <* whitespace
 
-variable = (Var newWildcard <$ (lookAhead (char '_') >> identifier))
+variable = (Var newWildcard <$ char '_')
   <|> (Var <$> vname)
   <?> "variable"
 
