@@ -120,9 +120,9 @@ rawFunctor = rawIdentifier
          <|> between (char '\'') (char '\'') (many (noneOf "'"))
          <?> "functor"
 
-rawIdentifier = lookAhead lower >> ((:) <$> letter <*> many (letter <|> digit <|> char '_'))
+rawIdentifier = (:) <$> lower <*> many (letter <|> digit <|> char '_')
 
-rawOperator = choice $ map (try . string) $ sortOn (negate . length) operatorNames
+rawOperator = choice $ map (try . string) sortedOperatorNames
 
 list = brackets $ do
   hds <- option [] $ commaSep1 termWithoutConjunction
@@ -150,6 +150,8 @@ langProlog = P.LanguageDef
   }
 
 operatorNames = [ ";", ",", "<", "=..", "=:=", "=\\=", "=<", "=", ">=", ">", "\\=", "is", "^", "**", "*", "+", "-", "\\", "mod", "div", "\\+" ]
+
+sortedOperatorNames = sortOn (negate . length) operatorNames
 
 -- lexer
 lexer = P.makeTokenParser langProlog
