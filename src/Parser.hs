@@ -104,7 +104,7 @@ vname = lookAhead upper >> (VariableName 0 <$> identifier)
 
 functor = (lookAhead lower >> identifier)
    <|> operator
-   <|> quotedFunctor
+   <|> rawQuotedFunctor
    <?> "functor"
 
 struct = do
@@ -121,14 +121,14 @@ operatorLiteral = Struct <$> operator <*> pure []
 
 rawFunctor = rawIdentifier
          <|> rawOperator
-         <|> quotedFunctor
+         <|> rawQuotedFunctor
          <?> "functor"
 
 rawIdentifier = (:) <$> lower <*> many (alphaNum <|> char '_')
 
 rawOperator = choice $ map (try . string) sortedOperatorNames
 
-quotedFunctor = between (char '\'') (char '\'') (many (noneOf "'"))
+rawQuotedFunctor = between (char '\'') (char '\'') (many (noneOf "'"))
 
 list = brackets $ do
   hds <- option [] $ commaSep1 termWithoutConjunction
