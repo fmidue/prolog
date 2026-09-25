@@ -9,6 +9,7 @@ import qualified Text.Parsec.Expr as Parsec
 import qualified Text.Parsec.Token as P
 import Text.Parsec.Language (emptyDef)
 import Control.Applicative ((<$>),(<*>),(<$),(<*))
+import Data.List (sortOn)
 
 import Syntax
 
@@ -107,11 +108,21 @@ functor = (lookAhead lower >> identifier)
    <?> "functor"
 
 struct = do
-  f <- functor
-  ts <- option [] $ parens $ commaSep1 termWithoutConjunction
+  f <- rawFunctor
+  ts <- try (between (char '(' <* whitespace) (char ')' <* whitespace) (commaSep1 termWithoutConjunction))
+    <|> ([] <$ whitespace)
   return (Struct f ts)
 
 operatorLiteral = Struct <$> operator <*> pure []
+
+rawFunctor = rawIdentifier
+         <|> rawOperator
+         <|> between (char '\'') (char '\'') (many (noneOf "'"))
+         <?> "functor"
+
+rawIdentifier = lookAhead lower >> ((:) <$> letter <*> many (letter <|> digit <|> char '_'))
+
+rawOperator = choice $ map (try . string) $ sortOn (negate . length) operatorNames
 
 list = brackets $ do
   hds <- option [] $ commaSep1 termWithoutConjunction
