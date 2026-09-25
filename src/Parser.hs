@@ -9,6 +9,7 @@ import qualified Text.Parsec.Expr as Parsec
 import qualified Text.Parsec.Token as P
 import Text.Parsec.Language (emptyDef)
 import Control.Applicative ((<$>),(<*>),(<$),(<*))
+import Data.Char (isAlpha)
 import Data.List (sortOn)
 
 import Syntax
@@ -126,7 +127,15 @@ rawFunctor = rawIdentifier
 
 rawIdentifier = (:) <$> lower <*> many (alphaNum <|> char '_')
 
-rawOperator = choice $ map (try . string) sortedOperatorNames
+rawOperator = choice $ map rawOperatorName sortedOperatorNames
+  where
+    rawOperatorName :: String -> Parsec String () String
+    rawOperatorName name = try $ do
+      _ <- string name
+      if all isAlpha name
+         then notFollowedBy (alphaNum <|> char '_')
+         else pure ()
+      return name
 
 rawQuotedFunctor = between (char '\'') (char '\'') (many (noneOf "'"))
 
