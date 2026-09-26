@@ -120,14 +120,14 @@ struct = do
     structWithoutArgs = Struct <$> functor <*> pure []
 
     ensureAdjacentFunctor inputBeforeFunctor inputBeforeArgs f =
-      let consumedLength = length inputBeforeFunctor - length inputBeforeArgs
-      in if consumedLength `elem` possibleFunctorLengths f
+      let consumed = take (length inputBeforeFunctor - length inputBeforeArgs) inputBeforeFunctor
+      in if consumed `elem` possibleFunctorSpellings f
             then return ()
             else parserFail "whitespace between predicate and arguments"
 
 operatorLiteral = Struct <$> operator <*> pure []
 
-possibleFunctorLengths f = [length f, length f + 2]
+possibleFunctorSpellings f = [f, "'" ++ f ++ "'"]
 
 list = brackets $ do
   hds <- option [] $ commaSep1 termWithoutConjunction
