@@ -103,7 +103,7 @@ vname = lookAhead upper >> (VariableName 0 <$> identifier)
 
 functor = (lookAhead lower >> identifier)
    <|> operator
-   <|> rawQuotedFunctor
+   <|> between (char '\'') (char '\'') (many (noneOf "'"))
    <?> "functor"
 
 struct = do
@@ -126,8 +126,6 @@ struct = do
             else parserFail "whitespace between predicate and arguments"
 
 operatorLiteral = Struct <$> operator <*> pure []
-
-rawQuotedFunctor = between (char '\'') (char '\'') (many (noneOf "'"))
 
 possibleFunctorLengths f = [length f, length f + 2]
 
