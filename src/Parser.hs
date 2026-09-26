@@ -9,8 +9,6 @@ import qualified Text.Parsec.Expr as Parsec
 import qualified Text.Parsec.Token as P
 import Text.Parsec.Language (emptyDef)
 import Control.Applicative ((<$>),(<*>),(<$),(<*))
-import Data.Char (isAlpha)
-import Data.List (sortOn)
 
 import Syntax
 
@@ -112,32 +110,26 @@ struct = do
   try structWithArgs <|> structWithoutArgs
   where
     structWithArgs = do
-      f <- rawFunctor
-      ts <- between (char '(' <* whitespace) (char ')' <* whitespace) (commaSep1 termWithoutConjunction)
+      inputBeforeFunctor <- getInput
+      f <- functor
+      inputBeforeArgs <- getInput
+      ensureAdjacentFunctor inputBeforeFunctor inputBeforeArgs f
+      ts <- parens $ commaSep1 termWithoutConjunction
       return (Struct f ts)
 
     structWithoutArgs = Struct <$> functor <*> pure []
 
+    ensureAdjacentFunctor inputBeforeFunctor inputBeforeArgs f =
+      let consumedLength = length inputBeforeFunctor - length inputBeforeArgs
+      in if consumedLength `elem` possibleFunctorLengths f
+            then return ()
+            else parserFail "whitespace between predicate and arguments"
+
 operatorLiteral = Struct <$> operator <*> pure []
 
-rawFunctor = rawIdentifier
-         <|> rawOperator
-         <|> rawQuotedFunctor
-         <?> "functor"
-
-rawIdentifier = (:) <$> lower <*> many (P.identLetter langProlog)
-
-rawOperator = choice $ map rawOperatorName sortedOperatorNames
-  where
-    rawOperatorName :: String -> Parsec String () String
-    rawOperatorName name = try $ do
-      _ <- string name
-      if all isAlpha name
-         then notFollowedBy (alphaNum <|> char '_')
-         else notFollowedBy (alphaNum <|> char '_' <|> oneOf "#$&@*+/<=>\\^~")
-      return name
-
 rawQuotedFunctor = between (char '\'') (char '\'') (many (noneOf "'"))
+
+possibleFunctorLengths f = [length f, length f + 2]
 
 list = brackets $ do
   hds <- option [] $ commaSep1 termWithoutConjunction
@@ -165,8 +157,6 @@ langProlog = P.LanguageDef
   }
 
 operatorNames = [ ";", ",", "<", "=..", "=:=", "=\\=", "=<", "=", ">=", ">", "\\=", "is", "^", "**", "*", "+", "-", "\\", "mod", "div", "\\+" ]
-
-sortedOperatorNames = sortOn (negate . length) operatorNames
 
 -- lexer
 lexer = P.makeTokenParser langProlog
