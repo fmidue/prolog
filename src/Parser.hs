@@ -107,11 +107,27 @@ functor = (lookAhead lower >> identifier)
    <?> "functor"
 
 struct = do
-  f <- functor
-  ts <- option [] $ parens $ commaSep1 termWithoutConjunction
-  return (Struct f ts)
+  try structWithArgs <|> structWithoutArgs
+  where
+    structWithArgs = do
+      inputBeforeFunctor <- getInput
+      f <- functor
+      inputBeforeArgs <- getInput
+      ensureAdjacentFunctor inputBeforeFunctor inputBeforeArgs f
+      ts <- parens $ commaSep1 termWithoutConjunction
+      return (Struct f ts)
+
+    structWithoutArgs = Struct <$> functor <*> pure []
+
+    ensureAdjacentFunctor inputBeforeFunctor inputBeforeArgs f =
+      let consumed = take (length inputBeforeFunctor - length inputBeforeArgs) inputBeforeFunctor
+      in if consumed `elem` possibleFunctorSpellings f
+            then return ()
+            else parserFail "whitespace between predicate and arguments"
 
 operatorLiteral = Struct <$> operator <*> pure []
+
+possibleFunctorSpellings f = [f, "'" ++ f ++ "'"]
 
 list = brackets $ do
   hds <- option [] $ commaSep1 termWithoutConjunction
