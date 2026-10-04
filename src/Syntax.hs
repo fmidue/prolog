@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, ViewPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveDataTypeable, ViewPatterns, ScopedTypeVariables, DeriveGeneric #-}
 module Syntax
    ( Term(..), var, cut
    , Clause(..), rhs
@@ -14,25 +14,26 @@ where
 import Data.Generics (Data(..), Typeable(..))
 import Data.List (intercalate)
 import Data.Char (digitToInt)
+import GHC.Generics (Generic)
 
 
 data Term = Struct Atom [Term]
           | Var VariableName
           | Cut Int
-      deriving (Eq, Data, Typeable)
+      deriving (Eq, Data, Typeable, Generic)
 var = Var . VariableName 0
 cut = Cut 0
 
 data Clause = Clause { lhs :: Term, rhs_ :: [Goal] }
             | ClauseFn { lhs :: Term, fn :: [Term] -> [Goal] }
-      deriving (Data, Typeable)
+      deriving (Data, Typeable, Generic)
 rhs (Clause   _ rhs) = const rhs
 rhs (ClauseFn _ fn ) = fn
 
 data VariableName
   = VariableName Int String
   | Wildcard (Maybe Int)
-  deriving (Eq, Data, Typeable, Ord)
+  deriving (Eq, Data, Typeable, Ord, Generic)
 
 newWildcard = Wildcard Nothing
 
