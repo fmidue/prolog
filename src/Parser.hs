@@ -6,6 +6,7 @@ module Parser
 import Text.Parsec
 import Text.Parsec.Expr hiding (Assoc(..))
 import qualified Text.Parsec.Expr as Parsec
+import Text.Parsec.Pos (updatePosString)
 import qualified Text.Parsec.Token as P
 import Text.Parsec.Language (emptyDef)
 import Control.Applicative ((<$>),(<*>),(<$),(<*))
@@ -101,15 +102,31 @@ variable = (Var newWildcard <$ char '_')
 
 vname = lookAhead upper >> (VariableName 0 <$> identifier)
 
-functor = (lookAhead lower >> identifier)
-   <|> operator
-   <|> between (char '\'') (char '\'') (many (noneOf "'"))
-   <?> "functor"
+functor = fst <$> functorWithSpelling
+
+functorWithSpelling =
+      (\f -> (f, f)) <$> (lookAhead lower >> identifier)
+  <|> (\f -> (f, f)) <$> operator
+  <|> (\f -> (f, "'" ++ f ++ "'")) <$> between (char '\'') (char '\'') (many (noneOf "'"))
+  <?> "functor"
 
 struct = do
-  f <- functor
-  ts <- option [] $ parens $ commaSep1 termWithoutConjunction
-  return (Struct f ts)
+  try structWithArgs <|> structWithoutArgs
+  where
+    structWithArgs = do
+      startPos <- getPosition
+      (f, spelling) <- functorWithSpelling
+      endPos <- getPosition
+      ensureAdjacentFunctor startPos endPos spelling
+      ts <- parens $ commaSep1 termWithoutConjunction
+      return (Struct f ts)
+
+    structWithoutArgs = Struct <$> functor <*> pure []
+
+    ensureAdjacentFunctor startPos endPos spelling =
+      if endPos == updatePosString startPos spelling
+            then return ()
+            else parserFail "whitespace between predicate and arguments"
 
 operatorLiteral = Struct <$> operator <*> pure []
 
