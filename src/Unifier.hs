@@ -7,8 +7,6 @@ module Unifier
 where
 
 import           Control.Arrow      (second)
-import           Control.Monad      (mzero)
-import           Control.Monad.Fail (MonadFail)
 import           Data.Function      (fix)
 import           Data.Generics      (everything, mkQ)
 

@@ -1,14 +1,12 @@
 {-# LANGUAGE TemplateHaskell, FlexibleInstances #-}
 module Quote (t,ts,c,pl) where
 
-import Control.Applicative ((<*))
-import Data.Functor.Identity (Identity)
 
 import Language.Haskell.TH (listE, varE, viewP, mkName, Q, Exp, Pat)
 import Language.Haskell.TH.Syntax (Lift(lift))
 import Language.Haskell.TH.Lift (deriveLiftMany)
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
-import Text.Parsec (parse, eof, ParsecT)
+import Text.Parsec (parse, eof)
 import Text.Parsec.String (Parser)
 import Data.Generics (extQ, typeOf, Data)
 

@@ -1,8 +1,7 @@
 {-# LANGUAGE TypeApplications #-}
 module Main (main) where
 
-import Data.Either (isLeft, either)
-import Control.Applicative ((<*),(<*>),(<$>))
+import Data.Either (isLeft)
 import Control.Monad (forM)
 import System.Directory
 import System.FilePath

@@ -11,7 +11,7 @@ module Syntax
    )
 where
 
-import Data.Generics (Data(..), Typeable(..))
+import Data.Generics (Data(..), Typeable)
 import Data.List (intercalate)
 import Data.Char (digitToInt)
 import GHC.Generics (Generic)

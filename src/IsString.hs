@@ -3,7 +3,6 @@
 module IsString () where
 
 import GHC.Exts (IsString(..))
-import Control.Applicative ((<*))
 import Text.Parsec (parse, eof)
 
 import Prolog ( vname,        term, clause

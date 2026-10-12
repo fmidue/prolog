@@ -21,7 +21,6 @@ import Parser
 import Unifier
 import Interpreter
 
-import Control.Monad.IO.Class
 import Control.Monad.Trans.Writer
 
 runQuery :: Maybe FilePath -> String -> IO [Unifier]

@@ -7,8 +7,6 @@ import Text.Parsec
 import Text.Parsec.Expr hiding (Assoc(..))
 import qualified Text.Parsec.Expr as Parsec
 import qualified Text.Parsec.Token as P
-import Text.Parsec.Language (emptyDef)
-import Control.Applicative ((<$>),(<*>),(<$),(<*))
 
 import Syntax
 

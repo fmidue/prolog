@@ -15,11 +15,9 @@ import Control.Monad.Reader
 import Control.Monad.Writer
 import Control.Monad.State
 import Control.Monad.Except
-import Control.Monad.Fix
-import Control.Monad (unless)
 import Data.Maybe (isJust)
 import Data.Generics (everywhere, mkT, everywhereM, mkM)
-import Control.Applicative ((<$>),(<*>),(<$),(<*), Applicative(..), Alternative)
+import Control.Applicative (Alternative)
 import Data.List (sort, nub)
 
 import Pipes
