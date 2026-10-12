@@ -1,5 +1,6 @@
 -- Allow specification through string literals by using OverloadedStrings.
 --
+{-# OPTIONS_GHC -Wno-orphans #-}
 module IsString () where
 
 import GHC.Exts (IsString(..))
