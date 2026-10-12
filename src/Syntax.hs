@@ -66,10 +66,6 @@ variables :: Term -> Maybe VariableName
 variables (Var v@(VariableName _ _)) = Just v
 variables _       = Nothing
 
-numbers :: Term -> Maybe Integer
-numbers (Struct (reads->[(n :: Integer,"")]) []) = Just n
-numbers _                                        = Nothing
-
 atoms :: Term -> Maybe [Atom]
 atoms (Struct a []) = Just [a]
 atoms _             = Nothing

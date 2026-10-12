@@ -173,9 +173,6 @@ operator = P.operator lexer
 whitespace :: ParsecT String () Identity ()
 whitespace = P.whiteSpace lexer
 
-natural :: ParsecT String () Identity Integer
-natural = P.natural lexer
-
 integer :: ParsecT String () Identity Integer
 integer = P.integer lexer
 
@@ -194,8 +191,6 @@ braces = P.braces lexer
 commaSep1 :: ParsecT String () Identity a -> ParsecT String () Identity [a]
 commaSep1 = P.commaSep1 lexer
 
-charLiteral :: ParsecT String () Identity Char
-charLiteral = P.charLiteral lexer
 
 stringLiteral :: ParsecT String () Identity Term
 stringLiteral = foldr (cons . representChar) nil <$> P.stringLiteral lexer
