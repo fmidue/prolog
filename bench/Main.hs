@@ -23,7 +23,7 @@ main = do
   let n = case args of { [] -> 6; (x:_) -> read x } :: Int
   Right p <- consult "bench/queens.pl"
   putStrLn "Starting benchmark..."
-  case resolve p [ts|queens($ n,Qs)|] of
+  case resolve p [ts|queens($n,Qs)|] of
     Left err -> putStrLn err
     Right qs ->
       putStrLn $ qs `deepseq` "Number of solutions: " ++ show (length qs)
