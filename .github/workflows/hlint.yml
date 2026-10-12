@@ -1,0 +1,31 @@
+---
+name: HLint
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 'Set up HLint'
+        uses: haskell-actions/hlint-setup@v2
+        with:
+          version: 'latest'
+
+      - name: 'Run HLint'
+        uses: haskell-actions/hlint-run@v2
+        with:
+          path: '["src/", "specs/", "app/", "bench/"]'
+          fail-on: suggestion
