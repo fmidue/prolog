@@ -17,7 +17,7 @@ import Data.Functor.Identity (Identity)
 main :: IO ()
 main = do
   args <- getArgs
-  let specRoot = case args of [] -> "specs"; [path] -> path
+  let specRoot = case args of [] -> "specs"; [path] -> path; _ -> error "too many arguments"
   files <- filter ((".spec"==) . takeExtension) . map (specRoot </>) <$> getDirectoryContents specRoot
   tests <- forM files $ \fname -> do
     let fixture = replaceExtension fname ".pl"
