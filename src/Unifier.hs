@@ -10,7 +10,7 @@ import           Control.Arrow      (second)
 import           Data.Function      (fix)
 import           Data.Generics      (everything, mkQ)
 
-import           Syntax
+import Syntax ( Term(Struct, Var), VariableName )
 
 type Unifier      = [Substitution]
 type Substitution = (VariableName, Term)

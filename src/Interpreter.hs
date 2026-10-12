@@ -12,20 +12,56 @@ module Interpreter
    )
 where
 import Control.Monad.Reader
+    ( ReaderT(runReaderT),
+      asks,
+      MonadReader(local) )
 import Control.Monad.Writer
+    ( WriterT,
+      MonadWriter(tell) )
 import Control.Monad.State
+    ( modify,
+      MonadState(get),
+      runState,
+      State )
 import Control.Monad.Except
+    ( MonadFix,
+      MonadPlus(mzero),
+      unless,
+      void,
+      MonadTrans(..),
+      MonadError(throwError) )
 import Data.Maybe (isJust)
 import Data.Generics (everywhere, mkT, everywhereM, mkM)
 import Control.Applicative (Alternative)
 import Data.List (sort, nub)
 
-import Pipes
-import qualified Pipes.Prelude as Pipes
+import Pipes ( (<-<), (>->), yield, runEffect, Producer )
+import qualified Pipes.Prelude as Pipes (drain, toListM, take)
 
 import Syntax
-import Unifier
+    ( arguments,
+      cons,
+      cut,
+      foldrPl,
+      newWildcard,
+      nil,
+      rhs,
+      var,
+      Clause(ClauseFn, Clause, lhs),
+      Goal,
+      Program,
+      Term(..),
+      VariableName(..) )
+import Unifier ( (+++), apply, unify, Unifier )
 import Database
+    ( abolish,
+      asserta,
+      assertz,
+      createDB,
+      getClauses,
+      hasPredicate,
+      termSignature,
+      Database )
 
 
 builtins :: [Clause]

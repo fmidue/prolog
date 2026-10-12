@@ -11,9 +11,10 @@ module Database
 where
 
 import Data.Map (Map)
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict as Map (
+   member, fromList, insertWith, lookup, adjust)
 
-import Syntax
+import Syntax ( Atom, Clause(Clause, lhs), Term(..) )
 import Data.Maybe (fromMaybe)
 
 

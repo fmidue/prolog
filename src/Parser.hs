@@ -4,11 +4,44 @@ module Parser
    ) where
 
 import Text.Parsec
-import Text.Parsec.Expr hiding (Assoc(..))
-import qualified Text.Parsec.Expr as Parsec
+    ( char,
+      digit,
+      letter,
+      lower,
+      noneOf,
+      oneOf,
+      upper,
+      between,
+      eof,
+      option,
+      (<?>),
+      (<|>),
+      lookAhead,
+      many,
+      parse,
+      parserFail,
+      ParseError,
+      ParsecT )
+import Text.Parsec.Expr
+    ( buildExpressionParser, Operator(Infix, Prefix) )
+import qualified Text.Parsec.Expr as Parsec (Operator, Assoc(..))
 import qualified Text.Parsec.Token as P
 
 import Syntax
+    ( arguments,
+      cons,
+      cut,
+      foldrPl,
+      hierarchy,
+      newWildcard,
+      nil,
+      var,
+      Assoc(AssocRight, AssocLeft),
+      Clause(Clause),
+      Operator(..),
+      Program,
+      Term(..),
+      VariableName(VariableName) )
 import Data.Functor.Identity (Identity)
 
 consult :: FilePath -> IO (Either ParseError Program)

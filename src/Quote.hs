@@ -9,9 +9,8 @@ import Text.Parsec (parse, eof)
 import Text.Parsec.String (Parser)
 import Data.Generics (extQ, typeOf, Data)
 
-import Prolog ( Term(..), Clause(..)
-              , term, terms, clause, program, whitespace
-              )
+import Parser ( term, terms, clause, program, whitespace )
+import Syntax ( Term(..), Clause(..) )
 
 t :: QuasiQuoter
 t  = prologQuasiQuoter term    "term"

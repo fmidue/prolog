@@ -17,11 +17,46 @@ module Prolog
 where
 
 import Syntax
+    ( cut,
+      rhs,
+      var,
+      Atom,
+      Clause(..),
+      Goal,
+      Program,
+      Term(..),
+      VariableName(..) )
 import Parser
+    ( bottom,
+      clause,
+      consult,
+      consultString,
+      parseQuery,
+      program,
+      term,
+      terms,
+      vname,
+      whitespace )
 import Unifier
+    ( (+++),
+      apply,
+      substitute,
+      unify,
+      unifyWithOccursCheck,
+      Substitution,
+      Unifier )
 import Interpreter
+    ( resolve,
+      resolveN,
+      resolveN_,
+      resolveP,
+      resolve_,
+      MonadGraphGen(..),
+      MonadTrace(..),
+      runNoGraphT,
+      withTrace )
 
-import Control.Monad.Trans.Writer
+import Control.Monad.Trans.Writer ( WriterT(runWriterT) )
 
 runQuery :: Maybe FilePath -> String -> IO [Unifier]
 runQuery = runQuery' NoTracing
