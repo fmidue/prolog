@@ -3,7 +3,7 @@ module Prolog
    , Clause(..), rhs
    , VariableName(..), Atom, Unifier, Substitution, Program, Goal
    , unify, unify_with_occurs_check
-   , apply
+   , apply, substitute
    , MonadTrace(..)
    , withTrace
    , MonadGraphGen(..)
