@@ -17,7 +17,7 @@ import Data.List (intercalate)
 import Data.Char (digitToInt)
 import GHC.Generics (Generic)
 import Language.Haskell.TH.Lift (deriveLiftMany)
-import Language.Haskell.TH.Syntax (Lift(lift))
+import Language.Haskell.TH.Syntax (Lift(..))
 
 
 data Term = Struct Atom [Term]
@@ -218,3 +218,4 @@ $(deriveLiftMany [''Term, ''VariableName, ''Clause])
 
 instance Lift ([Term] -> [Goal]) where
    lift _ = error "Clauses using Haskell functions can't be lifted."
+   liftTyped = error "Clauses using Haskell functions can't be lifted."
