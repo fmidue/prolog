@@ -40,9 +40,9 @@ same f x y = f x == f y
 
 unifyList :: Monad m => (Term -> Term -> m Unifier) -> [(Term, Term)] -> m Unifier
 unifyList _ [] = return []
-unifyList unify ((x,y):xys) = do
-   u  <- unify x y
-   u' <- unifyList unify (map (both (apply u)) xys)
+unifyList unifyFn ((x,y):xys) = do
+   u  <- unifyFn x y
+   u' <- unifyList unifyFn (map (both (apply u)) xys)
    return (u++u')
 
 both :: (t -> b) -> (t, t) -> (b, b)

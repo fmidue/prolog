@@ -193,7 +193,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
 
       -- resolve' :: Int -> Int -> Unifier -> [Goal] -> Stack -> m [Unifier]
       resolve' :: Int -> Int -> Branch -> Stack -> ReaderT Database (Producer Unifier m) [Unifier]
-      resolve' wildN depth (path, usf, []) stack = do
+      resolve' wildN' depth (path, usf, []) stack = do
          trace "=== yield solution ==="
          trace_ "Depth" depth
          trace_ "Unif." usf
@@ -202,8 +202,8 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
 
          lift $ yield $ cleanup usf
 
-         (cleanup usf:) <$> backtrack wildN depth stack
-      resolve' wildN depth (path, usf, Cut n:gs) stack = do
+         (cleanup usf:) <$> backtrack wildN' depth stack
+      resolve' wildN' depth (path, usf, Cut n:gs) stack = do
          trace "=== resolve' (Cut) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -217,50 +217,50 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
 
          let gs' = everywhere (mkT $ unshiftCut n) gs
 
-         resolve' wildN depth (1:path, usf, gs') (drop n stack)
+         resolve' wildN' depth (1:path, usf, gs') (drop n stack)
          where
-           unshiftCut n (Cut m) = Cut (m-n)
+           unshiftCut n' (Cut m) = Cut (m-n')
            unshiftCut _ t = t
-      resolve' wildN depth (path, usf, goals@(Struct "asserta" [fact]:gs)) stack = do
+      resolve' wildN' depth (path, usf, goals''@(Struct "asserta" [fact]:gs)) stack = do
          trace "=== resolve' (asserta/1) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
-         trace_ "Goals"   goals
+         trace_ "Goals"   goals''
          mapM_ (trace_ "Stack") stack
 
-         createConnections (path, usf, goals) [(1:path,[],[])] [(1:path, usf, gs)]
+         createConnections (path, usf, goals'') [(1:path,[],[])] [(1:path, usf, gs)]
 
-         local (asserta fact) $ resolve' wildN depth (1:path, usf, gs) stack
-      resolve' wildN depth (path, usf, goals@(Struct "assertz" [fact]:gs)) stack = do
+         local (asserta fact) $ resolve' wildN' depth (1:path, usf, gs) stack
+      resolve' wildN' depth (path, usf, goals''@(Struct "assertz" [fact]:gs)) stack = do
          trace "=== resolve' (assertz/1) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
-         trace_ "Goals"   goals
+         trace_ "Goals"   goals''
          mapM_ (trace_ "Stack") stack
 
-         createConnections (path, usf, goals) [(1:path,[],[])] [(1:path, usf, gs)]
+         createConnections (path, usf, goals'') [(1:path,[],[])] [(1:path, usf, gs)]
 
-         local (assertz fact) $ resolve' wildN depth (1:path, usf, gs) stack
-      resolve' wildN depth (path, usf, goals@(Struct "retract" [t]:gs)) stack = do
+         local (assertz fact) $ resolve' wildN' depth (1:path, usf, gs) stack
+      resolve' wildN' depth (path, usf, goals''@(Struct "retract" [t]:gs)) stack = do
          trace "=== resolve' (retract/1) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
-         trace_ "Goals"   goals
+         trace_ "Goals"   goals''
          mapM_ (trace_ "Stack") stack
 
-         createConnections (path, usf, goals) [(1:path,[],[])] [(1:path, usf, gs)]
+         createConnections (path, usf, goals'') [(1:path,[],[])] [(1:path, usf, gs)]
 
          clauses <- asks (getClauses t)
          case [ t' | Clause t' [] <- clauses, isJust (unify t t') ] of
             []       -> return (fail "retract/1")
-            (fact:_) -> local (abolish fact) $ resolve' wildN depth (1:path, usf, gs) stack
-      resolve' wildN depth (path, usf, goals@(nextGoal@(Struct "=" [l,r]):gs)) stack = do
+            (fact:_) -> local (abolish fact) $ resolve' wildN' depth (1:path, usf, gs) stack
+      resolve' wildN' depth (path, usf, goals''@(nextGoal@(Struct "=" [l,r]):gs)) stack = do
          -- This special case is here to avoid introducing unnecessary
          -- variables that occur when applying "X=X." as a rule.
          trace "=== resolve' (=/2) ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
-         trace_ "Goals"   goals
+         trace_ "Goals"   goals''
          mapM_ (trace_ "Stack") stack
 
          let bs = [ (1:path,u,[]) | u <- unify l r ]
@@ -273,13 +273,13 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
 
          createConnections (path, usf, nextGoal:gs) bs branches
 
-         choose wildN depth (path,usf,gs) branches stack
+         choose wildN' depth (path,usf,gs) branches stack
 
         where
          shiftCut (Cut n) = Cut (succ n)
          shiftCut t       = t
-      resolve' wildN depth (path, usf, nextGoal@(Var i):gs) stack = throwError "Variables are not supported as goals"
-      resolve' wildN depth (path, usf, nextGoal:gs) stack = do
+      resolve' wildN' depth (path, usf, nextGoal@(Var i):gs) stack = throwError "Variables are not supported as goals"
+      resolve' wildN' depth (path, usf, nextGoal:gs) stack = do
          trace "=== resolve' ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -321,20 +321,20 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
            modify (+1)
            pure $ Wildcard (Just n)
 
-      choose wildN depth _           []              stack = backtrack wildN depth stack
-      choose wildN depth (path,u,gs) ((path',u',gs'):alts) stack = do
+      choose wildN' depth _           []              stack = backtrack wildN' depth stack
+      choose wildN' depth (path,u,gs) ((path',u',gs'):alts) stack = do
          trace "=== choose ==="
          trace_ "Depth"   depth
          trace_ "Unif."   u
          trace_ "Goals"   gs
          mapM_ (trace_ "Alt.") ((path',u',gs'):alts)
          mapM_ (trace_ "Stack") stack
-         resolve' wildN (succ depth) (path',u',gs') (((path,u,gs),alts) : stack)
+         resolve' wildN' (succ depth) (path',u',gs') (((path,u,gs),alts) : stack)
 
-      backtrack wildN _     [] = do
+      backtrack wildN' _     [] = do
          trace "=== give up ==="
          return (fail "Goal cannot be resolved!")
-      backtrack wildN depth (((path,u,gs),alts):stack) = do
+      backtrack wildN' depth (((path,u,gs),alts):stack) = do
          trace "=== backtrack ==="
          -- depth is not adjusted correctly if choice-points have been cut
-         choose wildN (pred depth) (path,u,gs) alts stack
+         choose wildN' (pred depth) (path,u,gs) alts stack

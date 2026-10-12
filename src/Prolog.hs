@@ -39,7 +39,7 @@ runQuery' t mFile qstr = do
         Right q -> case t of
           Tracing -> case runWriterT $ resolve p q of
             Left e -> printError e
-            Right (u,t) -> putStrLn t >> pure u
+            Right (u,t') -> putStrLn t' >> pure u
           NoTracing -> case resolve p q of
             Left e -> printError e
             Right u -> pure u
@@ -64,7 +64,7 @@ runQueryN' t n mFile qstr = do
         Right q -> case t of
           Tracing -> case runWriterT $ resolveN n p q of
             Left e -> printError e
-            Right (u,t) -> putStrLn t >> pure u
+            Right (u,t') -> putStrLn t' >> pure u
           NoTracing -> case resolveN n p q of
             Left e -> printError e
             Right u -> pure u

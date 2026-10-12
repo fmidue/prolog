@@ -54,11 +54,11 @@ parsePrologExp parser name str = do
    unquote (Struct "$" [Struct var []]) =
                              [e| Struct (show $(varE (mkName var))) [] |]
    unquote (Struct "$" _)  = fail "Found '$' with non-unquotable arguments"
-   unquote (Struct a   ts) = [e| Struct a $(listE $ map unquote ts) |]
-   unquote t               = lift t
+   unquote (Struct a   ts') = [e| Struct a $(listE $ map unquote ts') |]
+   unquote t'               = lift t'
 
-   unquoteClause (Clause lhs rhs) =
-      [e| Clause $(unquote lhs) $(listE $ map unquote rhs) |]
+   unquoteClause (Clause lhs' rhs) =
+      [e| Clause $(unquote lhs') $(listE $ map unquote rhs) |]
    unquoteClause (ClauseFn _ _) =
       fail "Clauses using Haskell functions are not quasi-quotable."
 

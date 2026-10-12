@@ -8,7 +8,7 @@ import System.FilePath
 import System.Console.ANSI
 import System.Environment (getArgs)
 
-import Test.HUnit
+import Test.HUnit hiding (path)
 import Text.Parsec
 
 import Language.Prolog (vname, term, bottom, whitespace, resolve, consult, Program, VariableName, Term)

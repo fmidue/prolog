@@ -33,8 +33,8 @@ data Clause = Clause { lhs :: Term, rhs_ :: [Goal] }
       deriving (Data, Typeable, Generic)
 
 rhs :: Clause -> [Term] -> [Goal]
-rhs (Clause   _ rhs) = const rhs
-rhs (ClauseFn _ fn ) = fn
+rhs (Clause   _ rhs') = const rhs'
+rhs (ClauseFn _ fn' ) = fn'
 
 data VariableName
   = VariableName Int String
@@ -102,8 +102,8 @@ prettyPrint _ _ t@(Struct "." [_,_]) =
       --   Just str -> prettyPrint str
       --   Nothing  ->
             "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" ++ prettyPrint True 0 rest) ++  "]"
-   where g ts (Struct "." [h,t]) = g (h:ts) t
-         g ts t = (reverse ts, t)
+   where g ts (Struct "." [h,t']) = g (h:ts) t'
+         g ts t' = (reverse ts, t')
          isNil (Struct "[]" []) = True
          isNil _                = False
 
@@ -142,9 +142,9 @@ instance Show VariableName where
    show (Wildcard Nothing) = "_"
 
 instance Show Clause where
-   show (Clause   lhs [] ) = show lhs ++ "."
-   show (Clause   lhs rhs) = show lhs ++ " :- " ++ intercalate ", " (map show rhs) ++ "."
-   show (ClauseFn lhs _  ) = show lhs ++ " :- " ++ "<Haskell function>" ++ "."
+   show (Clause   lhs' [] ) = show lhs' ++ "."
+   show (Clause   lhs' rhs') = show lhs' ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
+   show (ClauseFn lhs' _  ) = show lhs' ++ " :- " ++ "<Haskell function>" ++ "."
 
 
 
