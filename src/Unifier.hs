@@ -2,6 +2,7 @@ module Unifier
    ( Unifier, Substitution
    , unify, unify_with_occurs_check
    , apply, (+++)
+   , substitute
    )
 where
 
@@ -55,7 +56,10 @@ simplify u = map (second (apply u)) u
 
 apply :: Unifier -> Term -> Term
 apply = flip $ foldl $ flip substitute
-  where
-    substitute (v,t) (Var v')      | v == v' = t
-    substitute s     (Struct a ts) = Struct a (map (substitute s) ts)
-    substitute _     t             = t
+
+
+substitute :: (VariableName, Term) -> Term -> Term
+substitute (v,t) (Var v')      | v == v' = t
+substitute s     (Struct a ts) = Struct a (map (substitute s) ts)
+substitute _     t             = t
+    
