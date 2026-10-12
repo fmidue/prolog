@@ -70,11 +70,11 @@ builtins =
  where
    binaryIntegerPredicate :: (Integer -> Integer -> Bool) -> ([Term] -> [Goal])
    binaryIntegerPredicate p [eval->Just n, eval->Just m] | n `p` m = []
-   binaryIntegerPredicate p _ = [Struct "false" []]
+   binaryIntegerPredicate _ _ = [Struct "false" []]
 
    binaryPredicate :: (Term -> Term -> Bool) -> ([Term] -> [Goal])
    binaryPredicate p [t1, t2] | t1 `p` t2 = []
-   binaryPredicate p _ = [Struct "false" []]
+   binaryPredicate _ _ = [Struct "false" []]
 
    is [t, eval->Just n] = [Struct "=" [t, Struct (show n) []]]
    is _                 = [Struct "false" []]
@@ -193,7 +193,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
 
       -- resolve' :: Int -> Int -> Unifier -> [Goal] -> Stack -> m [Unifier]
       resolve' :: Int -> Int -> Branch -> Stack -> ReaderT Database (Producer Unifier m) [Unifier]
-      resolve' wildN' depth (path, usf, []) stack = do
+      resolve' wildN' depth (_, usf, []) stack = do
          trace "=== yield solution ==="
          trace_ "Depth" depth
          trace_ "Unif." usf
@@ -278,8 +278,8 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
         where
          shiftCut (Cut n) = Cut (succ n)
          shiftCut t       = t
-      resolve' wildN' depth (path, usf, nextGoal@(Var i):gs) stack = throwError "Variables are not supported as goals"
-      resolve' wildN' depth (path, usf, nextGoal:gs) stack = do
+      resolve' _ _ (_, _, (Var _):_) _ = throwError "Variables are not supported as goals"
+      resolve' _ depth (path, usf, nextGoal:gs) stack = do
          trace "=== resolve' ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -331,7 +331,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
          mapM_ (trace_ "Stack") stack
          resolve' wildN' (succ depth) (path',u',gs') (((path,u,gs),alts) : stack)
 
-      backtrack wildN' _     [] = do
+      backtrack _ _     [] = do
          trace "=== give up ==="
          return (fail "Goal cannot be resolved!")
       backtrack wildN' depth (((path,u,gs),alts):stack) = do
