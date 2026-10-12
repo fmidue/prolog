@@ -2,7 +2,7 @@
 module Main (main) where
 
 import Data.Either (isLeft)
-import Control.Monad (forM)
+import Control.Monad (forM, void)
 import System.Directory
 import System.FilePath
 import System.Console.ANSI
@@ -18,7 +18,7 @@ main :: IO ()
 main = do
   args <- getArgs
   let specRoot = case args of [] -> "specs"; [path] -> path
-  files <- filter ((".spec"==) . takeExtension) <$> map (specRoot </>) <$> getDirectoryContents specRoot
+  files <- filter ((".spec"==) . takeExtension) . map (specRoot </>) <$> getDirectoryContents specRoot
   tests <- forM files $ \fname -> do
     let fixture = replaceExtension fname ".pl"
     hasFixture <- doesFileExist fixture
@@ -49,11 +49,11 @@ specFile = (pure . ("parsing should fail" ~:) . (@?= True) . isLeft) <$ try (str
 testSpec :: Parsec String () (Program -> Test)
 testSpec = do
   q  <- string "?-" >> whitespace >> term <* string "." <* newline
-  us <- unifiers <* optional (whitespace >> string ";" >> newline >> string "false") <* string "." <* ((newline >> return ()) <|> eof)
+  us <- unifiers <* optional (whitespace >> string ";" >> newline >> string "false") <* string "." <* (void newline <|> eof)
   return $ \p -> "?- " ++ show q ++ "." ~: either (\e -> putStrLn e >> pure []) pure (resolve p [q]) >>= (@?= us)
 
 unifiers :: ParsecT   String   ()   Identity   [[(VariableName, Term)]]
-unifiers =  (unifier `sepBy1` (try $ string ";" <* newline >> notFollowedBy (string "false.")))
+unifiers =  (unifier `sepBy1` try (string ";" <* newline >> notFollowedBy (string "false.")))
         <|> (string "false" >> return [])
 
 unifier :: ParsecT   String   ()   Identity   [(VariableName, Term)]

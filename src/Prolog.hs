@@ -2,7 +2,7 @@ module Prolog
    ( Term(..), var, cut
    , Clause(..), rhs
    , VariableName(..), Atom, Unifier, Substitution, Program, Goal
-   , unify, unify_with_occurs_check
+   , unify, unifyWithOccursCheck
    , apply, substitute
    , MonadTrace(..)
    , withTrace

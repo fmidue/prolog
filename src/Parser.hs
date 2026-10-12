@@ -50,7 +50,7 @@ clause = do t <- struct <* whitespace
       translate (Var _, _) = Nothing
       translate (Cut _, _) = Nothing
 
-      translate' t s s0 | isList t   = Just $ Struct "=" [ s, foldr_pl cons s0 t ]     -- Terminal
+      translate' t s s0 | isList t   = Just $ Struct "=" [ s, foldrPl cons s0 t ]     -- Terminal
       translate' t@(Struct "{}" ts) s s0 = Just $ foldr and (Struct "=" [ s, s0 ]) ts  -- Braced terms
       translate' (Struct a ts)  s s0 = Just $ Struct a (arguments ts s s0)             -- Non-Terminal
       translate' (Var _) _ _ = Nothing

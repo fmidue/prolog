@@ -91,7 +91,7 @@ builtins =
    eval _                       = mzero
 
    univ [Struct a ts, list]                        = [Struct "=" [Struct "." [Struct a [], foldr cons nil ts], list]]
-   univ [term,        Struct "." [Struct a [], t]] = [Struct "=" [term, Struct a (foldr_pl (:) [] t)]]
+   univ [term,        Struct "." [Struct a [], t]] = [Struct "=" [term, Struct a (foldrPl (:) [] t)]]
    univ _                                          = [Struct "false" []]
 
    atom [Struct _ []] = []
@@ -106,7 +106,7 @@ builtins =
 
    builtinSort = ClauseFn (Struct "sort" [var "Input", var "Output"]) (function sort_pl)
     where
-      sort_pl = foldr cons nil . nub . sort . foldr_pl (:) []
+      sort_pl = foldr cons nil . nub . sort . foldrPl (:) []
       function :: (Term -> Term) -> ([Term] -> [Goal])
       function f [input, output] = [Struct "=" [output, f input]]
       function _ _ = error "impossible"
@@ -171,7 +171,7 @@ resolveN :: (Functor m, MonadTrace m, MonadError Error m) => Int -> Program -> [
 resolveN n program goals = runNoGraphT $ resolveN_ n program goals
 
 resolveN_ :: (Functor m, MonadTrace m, MonadError Error m, MonadGraphGen m) => Int -> Program -> [Goal] -> m [Unifier]
-resolveN_ n program goals = Pipes.toListM $  Pipes.take n <-< (() <$ resolveP program goals)
+resolveN_ n program goals = Pipes.toListM $  Pipes.take n <-< void (resolveP program goals)
 
 resolveP :: forall m. (Monad m, MonadTrace m, MonadError Error m, MonadGraphGen m) => Program -> [Goal] -> Producer Unifier m [Unifier]
 -- Yield all unifiers that resolve <goal> using the clauses from <program>.

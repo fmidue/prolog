@@ -1,6 +1,6 @@
 module Unifier
    ( Unifier, Substitution
-   , unify, unify_with_occurs_check
+   , unify, unifyWithOccursCheck
    , apply, (+++)
    , substitute
    )
@@ -16,12 +16,12 @@ type Unifier      = [Substitution]
 type Substitution = (VariableName, Term)
 
 
-unify, unify_with_occurs_check :: MonadFail m => Term -> Term -> m Unifier
+unify, unifyWithOccursCheck :: MonadFail m => Term -> Term -> m Unifier
 
 unify = fix unify'
 
-unify_with_occurs_check =
-   fix $ \self t1 t2 -> if (t1 `occursIn` t2 || t2 `occursIn` t1)
+unifyWithOccursCheck =
+   fix $ \self t1 t2 -> if t1 `occursIn` t2 || t2 `occursIn` t1
                            then fail "occurs check"
                            else unify' self t1 t2
  where

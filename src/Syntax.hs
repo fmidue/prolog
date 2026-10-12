@@ -4,7 +4,7 @@ module Syntax
    , Clause(..), rhs
    , VariableName(..), Atom, Goal, Program
    , newWildcard
-   , cons, nil, foldr_pl
+   , cons, nil, foldrPl
    , arguments -- FIXME Should not be exposed
    , hierarchy
    , Operator(..), Assoc(..)
@@ -49,7 +49,7 @@ type Goal         = Term
 type Program      = [Clause]
 
 instance Ord Term where
-   (<=) = wildcards <=! variables <=! atoms <=! compound_terms <=! error "incomparable"
+   (<=) = wildcards <=! variables <=! atoms <=! compoundTerms <=! error "incomparable"
 
 infixr 4 <=!
 (<=!) :: Ord a => (t -> Maybe a) -> (t -> t -> Bool) -> t -> t -> Bool
@@ -74,9 +74,9 @@ atoms :: Term -> Maybe [Atom]
 atoms (Struct a []) = Just [a]
 atoms _             = Nothing
 
-compound_terms :: Term -> Maybe (Int, Atom, [Term])
-compound_terms (Struct a ts) = Just (length ts, a, ts)
-compound_terms _             = Nothing
+compoundTerms :: Term -> Maybe (Int, Atom, [Term])
+compoundTerms (Struct a ts) = Just (length ts, a, ts)
+compoundTerms _             = Nothing
 
 
 instance Show Term where
@@ -94,14 +94,14 @@ prettyPrint f n (Struct (flip lookup operatorTable->Just (p,InfixOp assoc name))
                            AssocRight -> (p, p-1)
 
 prettyPrint f n (Struct (flip lookup operatorTable->Just (p,PrefixOp name)) [r]) =
-   parensIf (n >= p) $ name ++ prettyPrint f (p {- Non-associative -}) r
+   parensIf (n >= p) $ name ++ prettyPrint f p {- Non-associative -} r
 
 prettyPrint _ _ t@(Struct "." [_,_]) =
    let (ts,rest) = g [] t in
       --case guard (isNil rest) >> sequence (map toChar ts) of
       --   Just str -> prettyPrint str
       --   Nothing  ->
-            "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" ++ (prettyPrint True 0) rest) ++  "]"
+            "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" ++ prettyPrint True 0 rest) ++  "]"
    where g ts (Struct "." [h,t]) = g (h:ts) t
          g ts t = (reverse ts, t)
          isNil (Struct "[]" []) = True
@@ -149,12 +149,12 @@ instance Show Clause where
 
 
 
-foldr_pl :: (Term -> a -> a) -> a -> Term -> a
-foldr_pl f k (Struct "." [h,t]) = f h (foldr_pl f k t)
-foldr_pl _ k (Struct "[]" [])   = k
-foldr_pl _ _ Struct{}   = error "foldr_pl: not a prolog list"
-foldr_pl _ _ Var{}   = error "foldr_pl: not a prolog list"
-foldr_pl _ _ Cut{}   = error "foldr_pl: not a prolog list"
+foldrPl :: (Term -> a -> a) -> a -> Term -> a
+foldrPl f k (Struct "." [h,t]) = f h (foldrPl f k t)
+foldrPl _ k (Struct "[]" [])   = k
+foldrPl _ _ Struct{}   = error "foldrPl: not a prolog list"
+foldrPl _ _ Var{}   = error "foldrPl: not a prolog list"
+foldrPl _ _ Cut{}   = error "foldrPl: not a prolog list"
 
 cons :: Term -> Term -> Term
 cons t1 t2 = Struct "."  [t1,t2]
