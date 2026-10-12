@@ -1,4 +1,5 @@
-{-# LANGUAGE DeriveDataTypeable, ViewPatterns, ScopedTypeVariables, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, ViewPatterns, ScopedTypeVariables, DeriveGeneric, TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Syntax
    ( Term(..), var, cut
    , Clause(..), rhs
@@ -15,6 +16,8 @@ import Data.Generics (Data(..), Typeable)
 import Data.List (intercalate)
 import Data.Char (digitToInt)
 import GHC.Generics (Generic)
+import Language.Haskell.TH.Lift (deriveLiftMany)
+import Language.Haskell.TH.Syntax (Lift(lift))
 
 
 data Term = Struct Atom [Term]
@@ -209,3 +212,9 @@ subscriptDigits 9 = "₉"
 subscriptDigits i
   | i < 0     = error "negative number in identifier subscript"
   | otherwise = concatMap (subscriptDigits . digitToInt) $ show i
+
+
+$(deriveLiftMany [''Term, ''VariableName, ''Clause])
+
+instance Lift ([Term] -> [Goal]) where
+   lift _ = error "Clauses using Haskell functions can't be lifted."

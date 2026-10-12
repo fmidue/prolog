@@ -4,21 +4,14 @@ module Quote (t,ts,c,pl) where
 
 import Language.Haskell.TH (listE, varE, viewP, mkName, Q, Exp, Pat)
 import Language.Haskell.TH.Syntax (Lift(lift))
-import Language.Haskell.TH.Lift (deriveLiftMany)
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
 import Text.Parsec (parse, eof)
 import Text.Parsec.String (Parser)
 import Data.Generics (extQ, typeOf, Data)
 
-import Prolog ( Term(..), VariableName, Clause(..), Goal
+import Prolog ( Term(..), Clause(..)
               , term, terms, clause, program, whitespace
               )
-
-$(deriveLiftMany [''Term, ''VariableName, ''Clause])
-
-instance Lift ([Term] -> [Goal]) where
-   lift _ = error "Clauses using Haskell functions can't be lifted."
-
 
 t :: QuasiQuoter
 t  = prologQuasiQuoter term    "term"
