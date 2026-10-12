@@ -127,6 +127,7 @@ instance (MonadTrace m, MonadTrans t, Monad (t m)) => MonadTrace (t m) where
 
 newtype Trace m a = Trace { withTrace :: m a }  deriving (Functor, Applicative, Monad, MonadError e)
 
+trace_ :: (MonadTrace m, Show a) => [Char] -> a -> m ()
 trace_ label x = trace (label++":\t"++show x)
 
 
@@ -154,6 +155,8 @@ instance Monad m => MonadGraphGen (NoGraphT m) where
 type Stack = [(Branch, [Branch])]
 type Branch = (Path, Unifier, [Goal])
 type Path = [Integer] -- Used for generating graph output
+
+root :: Path
 root = [] :: Path
 
 type Error = String

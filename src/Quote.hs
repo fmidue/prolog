@@ -20,9 +20,16 @@ instance Lift ([Term] -> [Goal]) where
    lift _ = error "Clauses using Haskell functions can't be lifted."
 
 
+t :: QuasiQuoter
 t  = prologQuasiQuoter term    "term"
+
+ts :: QuasiQuoter
 ts = prologQuasiQuoter terms   "term list"
+
+c :: QuasiQuoter
 c  = prologQuasiQuoter clause  "clause"
+
+pl :: QuasiQuoter
 pl = prologQuasiQuoter program "program"
 
 prologQuasiQuoter :: (Data a, Lift a) => Parser a -> String -> QuasiQuoter

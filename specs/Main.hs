@@ -11,9 +11,10 @@ import System.Environment (getArgs)
 import Test.HUnit
 import Text.Parsec
 
-import Language.Prolog (vname, term, bottom, whitespace, resolve, consult, Program)
+import Language.Prolog (vname, term, bottom, whitespace, resolve, consult, Program, VariableName, Term)
+import Data.Functor.Identity (Identity)
 
-
+main :: IO ()
 main = do
   args <- getArgs
   let specRoot = case args of [] -> "specs"; [path] -> path
@@ -30,6 +31,7 @@ main = do
       Right tests -> return (dropExtension fname ~: tests p)
   colorizeResult =<< runTestTT (test tests)
 
+colorizeResult :: Counts -> IO ()
 colorizeResult result = do
   let color = case result of Counts _ _ 0 0 -> Green
                              _              -> Red
@@ -50,10 +52,13 @@ testSpec = do
   us <- unifiers <* optional (whitespace >> string ";" >> newline >> string "false") <* string "." <* ((newline >> return ()) <|> eof)
   return $ \p -> "?- " ++ show q ++ "." ~: either (\e -> putStrLn e >> pure []) pure (resolve p [q]) >>= (@?= us)
 
+unifiers :: ParsecT   String   ()   Identity   [[(VariableName, Term)]]
 unifiers =  (unifier `sepBy1` (try $ string ";" <* newline >> notFollowedBy (string "false.")))
         <|> (string "false" >> return [])
 
+unifier :: ParsecT   String   ()   Identity   [(VariableName, Term)]
 unifier =  (substitution `sepBy1` (string "," <* newline))
        <|> (string "true" >> return [])
 
+substitution :: ParsecT   String   ()   Identity   (VariableName, Term)
 substitution = (,) <$> vname <* string "=" <* whitespace <*> bottom

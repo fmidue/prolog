@@ -21,12 +21,18 @@ data Term = Struct Atom [Term]
           | Var VariableName
           | Cut Int
       deriving (Eq, Data, Typeable, Generic)
+
+var :: String -> Term
 var = Var . VariableName 0
+
+cut :: Term
 cut = Cut 0
 
 data Clause = Clause { lhs :: Term, rhs_ :: [Goal] }
             | ClauseFn { lhs :: Term, fn :: [Term] -> [Goal] }
       deriving (Data, Typeable, Generic)
+
+rhs :: Clause -> [Term] -> [Goal]
 rhs (Clause   _ rhs) = const rhs
 rhs (ClauseFn _ fn ) = fn
 
@@ -35,6 +41,7 @@ data VariableName
   | Wildcard (Maybe Int)
   deriving (Eq, Data, Typeable, Ord, Generic)
 
+newWildcard :: VariableName
 newWildcard = Wildcard Nothing
 
 type Atom         = String
@@ -45,23 +52,29 @@ instance Ord Term where
    (<=) = wildcards <=! variables <=! atoms <=! compound_terms <=! error "incomparable"
 
 infixr 4 <=!
+(<=!) :: Ord a => (t -> Maybe a) -> (t -> t -> Bool) -> t -> t -> Bool
 (q <=! _) (q->Just l) (q->Just r) = l <= r
 (q <=! _) (q->Just _) _ = True
 (q <=! _) _ (q->Just _) = False
 (_ <=! c) x y = c x y
 
+wildcards :: Term -> Maybe (Maybe Int)
 wildcards (Var (Wildcard i)) = Just i
 wildcards _        = Nothing
 
+variables :: Term -> Maybe VariableName
 variables (Var v@(VariableName _ _)) = Just v
 variables _       = Nothing
 
+numbers :: Term -> Maybe Integer
 numbers (Struct (reads->[(n :: Integer,"")]) []) = Just n
 numbers _                                        = Nothing
 
+atoms :: Term -> Maybe [Atom]
 atoms (Struct a []) = Just [a]
 atoms _             = Nothing
 
+compound_terms :: Term -> Maybe (Int, Atom, [Term])
 compound_terms (Struct a ts) = Just (length ts, a, ts)
 compound_terms _             = Nothing
 
@@ -70,6 +83,7 @@ instance Show Term where
    show = prettyPrint False 0
 
 
+prettyPrint :: Bool -> Int -> Term -> [Char]
 prettyPrint True _ t@(Struct "," [_,_]) =
    "(" ++ prettyPrint False 0 t ++  ")"
 
@@ -102,10 +116,12 @@ prettyPrint _ _ (Cut _)         = "!"
 --prettyPrint _ _ (Cut n)         = "!^" ++ show n
 
 
+spaced :: [Char] -> [Char]
 spaced s = let h = head s
                l = last s
            in spaceIf (h `notElem` ",;") ++ s ++ spaceIf (l /= ';')
 
+spaceIf :: Bool -> String
 spaceIf True  = " "
 spaceIf False = ""
 
@@ -140,7 +156,10 @@ foldr_pl _ _ Struct{}   = error "foldr_pl: not a prolog list"
 foldr_pl _ _ Var{}   = error "foldr_pl: not a prolog list"
 foldr_pl _ _ Cut{}   = error "foldr_pl: not a prolog list"
 
+cons :: Term -> Term -> Term
 cons t1 t2 = Struct "."  [t1,t2]
+
+nil :: Term
 nil        = Struct "[]" []
 
 data Operator = PrefixOp String
@@ -175,6 +194,7 @@ hierarchy ignoreConjunction =
 --infix 6 \\
 --x \\ y = Struct "\\" [x,y]
 
+arguments :: [a] -> a -> a -> [a]
 arguments ts xs ds = ts ++ [ xs, ds ]
 -- arguments ts xs ds = [ xs \\ ds ] ++ ts
 

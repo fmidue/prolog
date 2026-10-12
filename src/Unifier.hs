@@ -28,6 +28,7 @@ unify_with_occurs_check =
    occursIn t = everything (||) (mkQ False (==t))
 
 
+unify' :: MonadFail m => (Term -> Term -> m Unifier) -> Term -> Term -> m [(VariableName, Term)]
 unify' _ (Var v) t  = return [(v,t)]
 unify' _ t (Var v)  = return [(v,t)]
 unify' self (Struct a1 ts1) (Struct a2 ts2) | a1 == a2 && same length ts1 ts2 =
@@ -44,8 +45,10 @@ unifyList unify ((x,y):xys) = do
    u' <- unifyList unify (map (both (apply u)) xys)
    return (u++u')
 
+both :: (t -> b) -> (t, t) -> (b, b)
 both f (x,y) = (f x, f y)
 
+(+++) :: [Substitution] -> [Substitution] -> Unifier
 u1 +++ u2 = simplify $ u1 ++ u2
 
 simplify :: Unifier -> Unifier
