@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes, StandaloneDeriving #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 module Main (main) where
 
 import Language.Prolog (consult, resolve, VariableName(..), Term(..))
@@ -8,7 +9,7 @@ import System.Environment (getArgs)
 import Control.DeepSeq (deepseq, NFData(rnf))
 
 instance NFData Term where
-   rnf (Struct a ts) = rnf a `seq` rnf ts
+   rnf (Struct a ts') = rnf a `seq` rnf ts'
    rnf (Var v)       = rnf v
    rnf (Cut n)       = rnf n
 instance NFData VariableName where
@@ -19,7 +20,7 @@ instance NFData VariableName where
 main :: IO ()
 main = do
   args <- getArgs
-  let n = case args of { [] -> 6; (x:_) -> read x }
+  let n = case args of { [] -> 6; (x:_) -> read x } :: Int
   Right p <- consult "bench/queens.pl"
   putStrLn "Starting benchmark..."
   case resolve p [ts|queens($n,Qs)|] of

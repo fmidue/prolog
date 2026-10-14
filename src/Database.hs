@@ -11,9 +11,10 @@ module Database
 where
 
 import Data.Map (Map)
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict as Map (
+   member, fromList, insertWith, lookup, adjust)
 
-import Syntax
+import Syntax ( Atom, Clause(Clause, lhs), Term(..) )
 import Data.Maybe (fromMaybe)
 
 
@@ -29,18 +30,26 @@ termSignature (Cut _) = Nothing
 
 newtype Database = DB (Map Signature [Clause])
 
+hasPredicate :: Signature -> Database -> Bool
 hasPredicate sig (DB index) = Map.member sig index
 
+createDB :: Foldable t => t Clause -> [Atom] -> Database
 createDB clauses emptyPredicates = DB $
    foldr (\clause -> maybe id (\sig -> Map.insertWith (++) sig [clause]) (termSignature (lhs clause)))
          (Map.fromList [ (Signature name 0, []) | name <- emptyPredicates ])
          clauses
 
+getClauses :: Term -> Database -> [Clause]
 getClauses term (DB index) = fromMaybe [] $ (`Map.lookup` index) =<< termSignature term
 
 
+asserta :: Term -> Database -> Database
 asserta fact (DB index) = DB $ maybe index (\sig -> Map.insertWith (++)        sig [Clause fact []] index) (termSignature fact)
+
+assertz :: Term -> Database -> Database
 assertz fact (DB index) = DB $ maybe index (\sig -> Map.insertWith (flip (++)) sig [Clause fact []] index) (termSignature fact)
+
+abolish :: Term -> Database -> Database
 abolish fact (DB index) = DB $ maybe index (\sig -> Map.adjust deleteFact sig index) (termSignature fact)
    where deleteFact (Clause t []:cs) | t == fact = cs
          deleteFact (_          :cs)             = cs
