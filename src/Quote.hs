@@ -1,30 +1,27 @@
 {-# LANGUAGE TemplateHaskell, FlexibleInstances #-}
 module Quote (t,ts,c,pl) where
 
-import Control.Applicative ((<*))
-import Data.Functor.Identity (Identity)
 
 import Language.Haskell.TH (listE, varE, viewP, mkName, Q, Exp, Pat)
 import Language.Haskell.TH.Syntax (Lift(lift))
-import Language.Haskell.TH.Lift (deriveLiftMany)
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
-import Text.Parsec (parse, eof, ParsecT)
+import Text.Parsec (parse, eof)
 import Text.Parsec.String (Parser)
 import Data.Generics (extQ, typeOf, Data)
 
-import Prolog ( Term(..), VariableName, Clause(..), Goal
-              , term, terms, clause, program, whitespace
-              )
+import Parser ( term, terms, clause, program, whitespace )
+import Syntax ( Term(..), Clause(..) )
 
-$(deriveLiftMany [''Term, ''VariableName, ''Clause])
-
-instance Lift ([Term] -> [Goal]) where
-   lift _ = error "Clauses using Haskell functions can't be lifted."
-
-
+t :: QuasiQuoter
 t  = prologQuasiQuoter term    "term"
+
+ts :: QuasiQuoter
 ts = prologQuasiQuoter terms   "term list"
+
+c :: QuasiQuoter
 c  = prologQuasiQuoter clause  "clause"
+
+pl :: QuasiQuoter
 pl = prologQuasiQuoter program "program"
 
 prologQuasiQuoter :: (Data a, Lift a) => Parser a -> String -> QuasiQuoter
@@ -49,11 +46,11 @@ parsePrologExp parser name str = do
    unquote (Struct "$" [Struct var []]) =
                              [e| Struct (show $(varE (mkName var))) [] |]
    unquote (Struct "$" _)  = fail "Found '$' with non-unquotable arguments"
-   unquote (Struct a   ts) = [e| Struct a $(listE $ map unquote ts) |]
-   unquote t               = lift t
+   unquote (Struct a   ts') = [e| Struct a $(listE $ map unquote ts') |]
+   unquote t'               = lift t'
 
-   unquoteClause (Clause lhs rhs) =
-      [e| Clause $(unquote lhs) $(listE $ map unquote rhs) |]
+   unquoteClause (Clause lhs' rhs) =
+      [e| Clause $(unquote lhs') $(listE $ map unquote rhs) |]
    unquoteClause (ClauseFn _ _) =
       fail "Clauses using Haskell functions are not quasi-quotable."
 

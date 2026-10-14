@@ -1,40 +1,50 @@
-{-# LANGUAGE DeriveDataTypeable, ViewPatterns, ScopedTypeVariables, DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable, ViewPatterns, ScopedTypeVariables, DeriveGeneric, TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Syntax
    ( Term(..), var, cut
    , Clause(..), rhs
    , VariableName(..), Atom, Goal, Program
    , newWildcard
-   , cons, nil, foldr_pl
+   , cons, nil, foldrPl
    , arguments -- FIXME Should not be exposed
    , hierarchy
    , Operator(..), Assoc(..)
    )
 where
 
-import Data.Generics (Data(..), Typeable(..))
+import Data.Generics (Data(..), Typeable)
 import Data.List (intercalate)
 import Data.Char (digitToInt)
 import GHC.Generics (Generic)
+import Language.Haskell.TH.Lift (deriveLiftMany)
+import Language.Haskell.TH.Syntax (Lift(..))
 
 
 data Term = Struct Atom [Term]
           | Var VariableName
           | Cut Int
       deriving (Eq, Data, Typeable, Generic)
+
+var :: String -> Term
 var = Var . VariableName 0
+
+cut :: Term
 cut = Cut 0
 
 data Clause = Clause { lhs :: Term, rhs_ :: [Goal] }
             | ClauseFn { lhs :: Term, fn :: [Term] -> [Goal] }
       deriving (Data, Typeable, Generic)
-rhs (Clause   _ rhs) = const rhs
-rhs (ClauseFn _ fn ) = fn
+
+rhs :: Clause -> [Term] -> [Goal]
+rhs (Clause   _ rhs') = const rhs'
+rhs (ClauseFn _ fn' ) = fn'
 
 data VariableName
   = VariableName Int String
   | Wildcard (Maybe Int)
   deriving (Eq, Data, Typeable, Ord, Generic)
 
+newWildcard :: VariableName
 newWildcard = Wildcard Nothing
 
 type Atom         = String
@@ -42,34 +52,37 @@ type Goal         = Term
 type Program      = [Clause]
 
 instance Ord Term where
-   (<=) = wildcards <=! variables <=! atoms <=! compound_terms <=! error "incomparable"
+   (<=) = wildcards <=! variables <=! atoms <=! compoundTerms <=! error "incomparable"
 
 infixr 4 <=!
+(<=!) :: Ord a => (t -> Maybe a) -> (t -> t -> Bool) -> t -> t -> Bool
 (q <=! _) (q->Just l) (q->Just r) = l <= r
 (q <=! _) (q->Just _) _ = True
 (q <=! _) _ (q->Just _) = False
 (_ <=! c) x y = c x y
 
+wildcards :: Term -> Maybe (Maybe Int)
 wildcards (Var (Wildcard i)) = Just i
 wildcards _        = Nothing
 
+variables :: Term -> Maybe VariableName
 variables (Var v@(VariableName _ _)) = Just v
 variables _       = Nothing
 
-numbers (Struct (reads->[(n :: Integer,"")]) []) = Just n
-numbers _                                        = Nothing
-
+atoms :: Term -> Maybe [Atom]
 atoms (Struct a []) = Just [a]
 atoms _             = Nothing
 
-compound_terms (Struct a ts) = Just (length ts, a, ts)
-compound_terms _             = Nothing
+compoundTerms :: Term -> Maybe (Int, Atom, [Term])
+compoundTerms (Struct a ts) = Just (length ts, a, ts)
+compoundTerms _             = Nothing
 
 
 instance Show Term where
    show = prettyPrint False 0
 
 
+prettyPrint :: Bool -> Int -> Term -> [Char]
 prettyPrint True _ t@(Struct "," [_,_]) =
    "(" ++ prettyPrint False 0 t ++  ")"
 
@@ -80,16 +93,16 @@ prettyPrint f n (Struct (flip lookup operatorTable->Just (p,InfixOp assoc name))
                            AssocRight -> (p, p-1)
 
 prettyPrint f n (Struct (flip lookup operatorTable->Just (p,PrefixOp name)) [r]) =
-   parensIf (n >= p) $ name ++ prettyPrint f (p {- Non-associative -}) r
+   parensIf (n >= p) $ name ++ prettyPrint f p {- Non-associative -} r
 
 prettyPrint _ _ t@(Struct "." [_,_]) =
    let (ts,rest) = g [] t in
       --case guard (isNil rest) >> sequence (map toChar ts) of
       --   Just str -> prettyPrint str
       --   Nothing  ->
-            "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" ++ (prettyPrint True 0) rest) ++  "]"
-   where g ts (Struct "." [h,t]) = g (h:ts) t
-         g ts t = (reverse ts, t)
+            "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" ++ prettyPrint True 0 rest) ++  "]"
+   where g ts (Struct "." [h,t']) = g (h:ts) t'
+         g ts t' = (reverse ts, t')
          isNil (Struct "[]" []) = True
          isNil _                = False
 
@@ -102,10 +115,12 @@ prettyPrint _ _ (Cut _)         = "!"
 --prettyPrint _ _ (Cut n)         = "!^" ++ show n
 
 
+spaced :: [Char] -> [Char]
 spaced s = let h = head s
                l = last s
            in spaceIf (h `notElem` ",;") ++ s ++ spaceIf (l /= ';')
 
+spaceIf :: Bool -> String
 spaceIf True  = " "
 spaceIf False = ""
 
@@ -126,21 +141,24 @@ instance Show VariableName where
    show (Wildcard Nothing) = "_"
 
 instance Show Clause where
-   show (Clause   lhs [] ) = show lhs ++ "."
-   show (Clause   lhs rhs) = show lhs ++ " :- " ++ intercalate ", " (map show rhs) ++ "."
-   show (ClauseFn lhs _  ) = show lhs ++ " :- " ++ "<Haskell function>" ++ "."
+   show (Clause   lhs' [] ) = show lhs' ++ "."
+   show (Clause   lhs' rhs') = show lhs' ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
+   show (ClauseFn lhs' _  ) = show lhs' ++ " :- " ++ "<Haskell function>" ++ "."
 
 
 
 
-foldr_pl :: (Term -> a -> a) -> a -> Term -> a
-foldr_pl f k (Struct "." [h,t]) = f h (foldr_pl f k t)
-foldr_pl _ k (Struct "[]" [])   = k
-foldr_pl _ _ Struct{}   = error "foldr_pl: not a prolog list"
-foldr_pl _ _ Var{}   = error "foldr_pl: not a prolog list"
-foldr_pl _ _ Cut{}   = error "foldr_pl: not a prolog list"
+foldrPl :: (Term -> a -> a) -> a -> Term -> a
+foldrPl f k (Struct "." [h,t]) = f h (foldrPl f k t)
+foldrPl _ k (Struct "[]" [])   = k
+foldrPl _ _ Struct{}   = error "foldrPl: not a prolog list"
+foldrPl _ _ Var{}   = error "foldrPl: not a prolog list"
+foldrPl _ _ Cut{}   = error "foldrPl: not a prolog list"
 
+cons :: Term -> Term -> Term
 cons t1 t2 = Struct "."  [t1,t2]
+
+nil :: Term
 nil        = Struct "[]" []
 
 data Operator = PrefixOp String
@@ -175,6 +193,7 @@ hierarchy ignoreConjunction =
 --infix 6 \\
 --x \\ y = Struct "\\" [x,y]
 
+arguments :: [a] -> a -> a -> [a]
 arguments ts xs ds = ts ++ [ xs, ds ]
 -- arguments ts xs ds = [ xs \\ ds ] ++ ts
 
@@ -193,3 +212,10 @@ subscriptDigits 9 = "₉"
 subscriptDigits i
   | i < 0     = error "negative number in identifier subscript"
   | otherwise = concatMap (subscriptDigits . digitToInt) $ show i
+
+
+$(deriveLiftMany [''Term, ''VariableName, ''Clause])
+
+instance Lift ([Term] -> [Goal]) where
+   lift _ = error "Clauses using Haskell functions can't be lifted."
+   liftTyped = error "Clauses using Haskell functions can't be lifted."

@@ -1,13 +1,13 @@
 -- Allow specification through string literals by using OverloadedStrings.
 --
+{-# OPTIONS_GHC -Wno-orphans #-}
 module IsString () where
 
 import GHC.Exts (IsString(..))
-import Control.Applicative ((<*))
 import Text.Parsec (parse, eof)
 
-import Prolog ( vname,        term, clause
-              , VariableName, Term, Clause )
+import Parser ( vname, term, clause )
+import Syntax ( VariableName, Term, Clause )
 
 
 instance IsString Clause where

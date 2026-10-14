@@ -2,8 +2,8 @@ module Prolog
    ( Term(..), var, cut
    , Clause(..), rhs
    , VariableName(..), Atom, Unifier, Substitution, Program, Goal
-   , unify, unify_with_occurs_check
-   , apply
+   , unify, unifyWithOccursCheck
+   , apply, substitute
    , MonadTrace(..)
    , withTrace
    , MonadGraphGen(..)
@@ -17,12 +17,46 @@ module Prolog
 where
 
 import Syntax
+    ( cut,
+      rhs,
+      var,
+      Atom,
+      Clause(..),
+      Goal,
+      Program,
+      Term(..),
+      VariableName(..) )
 import Parser
+    ( bottom,
+      clause,
+      consult,
+      consultString,
+      parseQuery,
+      program,
+      term,
+      terms,
+      vname,
+      whitespace )
 import Unifier
+    ( (+++),
+      apply,
+      substitute,
+      unify,
+      unifyWithOccursCheck,
+      Substitution,
+      Unifier )
 import Interpreter
+    ( resolve,
+      resolveN,
+      resolveN_,
+      resolveP,
+      resolve_,
+      MonadGraphGen(..),
+      MonadTrace(..),
+      runNoGraphT,
+      withTrace )
 
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Writer
+import Control.Monad.Trans.Writer ( WriterT(runWriterT) )
 
 runQuery :: Maybe FilePath -> String -> IO [Unifier]
 runQuery = runQuery' NoTracing
@@ -40,7 +74,7 @@ runQuery' t mFile qstr = do
         Right q -> case t of
           Tracing -> case runWriterT $ resolve p q of
             Left e -> printError e
-            Right (u,t) -> putStrLn t >> pure u
+            Right (u,t') -> putStrLn t' >> pure u
           NoTracing -> case resolve p q of
             Left e -> printError e
             Right u -> pure u
@@ -65,7 +99,7 @@ runQueryN' t n mFile qstr = do
         Right q -> case t of
           Tracing -> case runWriterT $ resolveN n p q of
             Left e -> printError e
-            Right (u,t) -> putStrLn t >> pure u
+            Right (u,t') -> putStrLn t' >> pure u
           NoTracing -> case resolveN n p q of
             Left e -> printError e
             Right u -> pure u
