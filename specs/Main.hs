@@ -62,7 +62,7 @@ assertParseErrorContains :: Either ParseError a -> Assertion
 assertParseErrorContains result =
   case result of
     Left err ->
-      assertBool (show err) ("whitespace between predicate and arguments" `isInfixOf` show err)
+      assertBool (show err) ("whitespace between symbol name and arguments" `isInfixOf` show err)
     Right _ ->
       assertFailure "expected parse failure"
 
