@@ -47,10 +47,10 @@ colorizeResult result = do
 
 parserMessageTests :: [Test]
 parserMessageTests =
-  [ "file parser reports spaced predicate arguments" ~: assertParseErrorContains (consultString "isX (x).")
-  , "file parser reports multiple spaced predicate arguments" ~: assertParseErrorContains (consultString "isX  (x).")
+  [ "file parser reports spaced functor arguments" ~: assertParseErrorContains (consultString "isX(a (x)).")
+  , "file parser reports multiply spaced predicate arguments" ~: assertParseErrorContains (consultString "isX  (x).")
   , "query parser reports spaced predicate arguments" ~: assertParseErrorContains (parseQuery "isX (x)")
-  , "query parser reports multiple spaced predicate arguments" ~: assertParseErrorContains (parseQuery "isX  (x)")
+  , "query parser reports multiply spaced predicate arguments" ~: assertParseErrorContains (parseQuery "isX  (x)")
   ]
 
 assertParseErrorContains :: Either ParseError a -> Assertion
