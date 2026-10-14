@@ -186,7 +186,7 @@ struct = do
           parserFail "whitespace between predicate and arguments"
     False ->
       return (Struct f [])
-  where
+
 operatorLiteral :: ParsecT String () Identity Term
 operatorLiteral = Struct <$> operator <*> pure []
 
