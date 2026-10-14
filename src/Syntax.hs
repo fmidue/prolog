@@ -111,7 +111,10 @@ prettyPrint _ _ t@(Struct "." [_, _]) =
   in -- case guard (isNil rest) >> sequence (map toChar ts) of
      --   Just str -> prettyPrint str
      --   Nothing  ->
-     "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" ++ prettyPrint True 0 rest) ++ "]"
+     "["
+       ++ intercalate "," (map (prettyPrint True 0) ts)
+       ++ (if isNil rest then "" else "|" ++ prettyPrint True 0 rest)
+       ++ "]"
   where
     g ts (Struct "." [h, t']) = g (h : ts) t'
     g ts t' = (reverse ts, t')

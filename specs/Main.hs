@@ -46,14 +46,19 @@ colorizeResult result = do
 
 specFile :: Parsec String () (Either ParseError Program -> [Test])
 specFile =
-  (pure . ("parsing should fail" ~:) . (@?= True) . isLeft) <$ try (string "syntax error")
+  (pure . ("parsing should fail" ~:) . (@?= True) . isLeft)
+    <$ try (string "syntax error")
     <|> (\specs -> pure $ either (pure . ("" ~:) . assertFailure @(IO ()) . show) (\p -> map ($ p) specs))
     =<< (testSpec `sepBy` newline <* eof)
 
 testSpec :: Parsec String () (Program -> Test)
 testSpec = do
   q <- string "?-" >> whitespace >> term <* string "." <* newline
-  us <- unifiers <* optional (whitespace >> string ";" >> newline >> string "false") <* string "." <* (void newline <|> eof)
+  us <-
+    unifiers
+      <* optional (whitespace >> string ";" >> newline >> string "false")
+      <* string "."
+      <* (void newline <|> eof)
   return $ \p -> "?- " ++ show q ++ "." ~: either (\e -> putStrLn e >> pure []) pure (resolve p [q]) >>= (@?= us)
 
 unifiers :: ParsecT String () Identity [[(VariableName, Term)]]
