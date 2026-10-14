@@ -49,7 +49,7 @@ jobs:
       - name: Build and test
         run: |
           set -ex
-          stack --no-terminal test --coverage --haddock --no-haddock-deps
+          stack --no-terminal test --bench --no-run-benchmarks --coverage --haddock --no-haddock-deps
           set +ex
         env:
           BUILD: ${{ matrix.plan.build }}
