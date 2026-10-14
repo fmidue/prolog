@@ -18,6 +18,7 @@ import Text.Parsec (
   char,
   digit,
   eof,
+  getPosition,
   letter,
   lookAhead,
   lower,
@@ -36,6 +37,7 @@ import Text.Parsec.Expr (
   buildExpressionParser,
  )
 import qualified Text.Parsec.Expr as Parsec (Assoc (..), Operator)
+import Text.Parsec.Pos (updatePosString)
 import qualified Text.Parsec.Token as P
 
 import Data.Functor.Identity (Identity)
@@ -166,18 +168,27 @@ variable =
 vname :: ParsecT String () Identity VariableName
 vname = lookAhead upper >> (VariableName 0 <$> identifier)
 
-functor :: ParsecT String () Identity String
-functor =
-  (lookAhead lower >> identifier)
-    <|> operator
-    <|> between (char '\'') (char '\'') (many (noneOf "'"))
-    <?> "functor"
+functorWithSpelling :: ParsecT String () Identity (String, String)
+functorWithSpelling =
+      (\f -> (f, f)) <$> (lookAhead lower >> identifier)
+  <|> (\f -> (f, f)) <$> operator
+  <|> (\f -> (f, "'" ++ f ++ "'")) <$> between (char '\'') (char '\'') (many (noneOf "'"))
+  <?> "functor"
 
 struct :: ParsecT String () Identity Term
 struct = do
-  f <- functor
-  ts <- option [] $ parens $ commaSep1 termWithoutConjunction
-  return (Struct f ts)
+  startPos <- getPosition
+  (f, spelling) <- functorWithSpelling
+  endPos <- getPosition
+  nextIsArguments <- option False $ True <$ lookAhead (char '(')
+  case nextIsArguments of
+    True
+      | endPos == updatePosString startPos spelling ->
+          Struct f <$> parens (commaSep1 termWithoutConjunction)
+      | otherwise ->
+          parserFail "whitespace between symbol name and arguments"
+    False ->
+      return (Struct f [])
 
 operatorLiteral :: ParsecT String () Identity Term
 operatorLiteral = Struct <$> operator <*> pure []

@@ -4,6 +4,7 @@ module Main (main) where
 
 import Control.Monad (forM, void)
 import Data.Either (isLeft)
+import Data.List (isInfixOf)
 import System.Console.ANSI
 import System.Directory
 import System.Environment (getArgs)
@@ -14,7 +15,7 @@ import Test.HUnit hiding (path)
 import Text.Parsec
 
 import Data.Functor.Identity (Identity)
-import Language.Prolog (Program, Term, VariableName, bottom, consult, resolve, term, vname, whitespace)
+import Language.Prolog (Program, Term, VariableName, bottom, consult, consultString, parseQuery, resolve, term, vname, whitespace)
 
 main :: IO ()
 main = do
@@ -32,7 +33,7 @@ main = do
     case parse specFile fname text of
       Left err -> return (dropExtension fname ~: (assertFailure (show err) :: IO ()))
       Right tests -> return (dropExtension fname ~: tests p)
-  counts' <- runTestTT (test tests)
+  counts' <- runTestTT (test (parserMessageTests ++ tests))
   colorizeResult counts'
   if errors counts' + failures counts' == 0
     then exitSuccess
@@ -48,6 +49,22 @@ colorizeResult result = do
   putStr (showCounts result)
   setSGR [Reset]
   putStrLn ""
+
+parserMessageTests :: [Test]
+parserMessageTests =
+  [ "file parser reports spaced functor arguments" ~: assertParseErrorContains (consultString "isX(a (x)).")
+  , "file parser reports multiply spaced predicate arguments" ~: assertParseErrorContains (consultString "isX  (x).")
+  , "query parser reports spaced predicate arguments" ~: assertParseErrorContains (parseQuery "isX (x)")
+  , "query parser reports multiply spaced predicate arguments" ~: assertParseErrorContains (parseQuery "isX  (x)")
+  ]
+
+assertParseErrorContains :: Either ParseError a -> Assertion
+assertParseErrorContains result =
+  case result of
+    Left err ->
+      assertBool (show err) ("whitespace between symbol name and arguments" `isInfixOf` show err)
+    Right _ ->
+      assertFailure "expected parse failure"
 
 specFile :: Parsec String () (Either ParseError Program -> [Test])
 specFile =
