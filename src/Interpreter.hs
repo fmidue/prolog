@@ -315,7 +315,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
          shiftCut (Cut n) = Cut (succ n)
          shiftCut t       = t
       resolve' _ _ (_, _, (Var _):_) _ = throwError "Variables are not supported as goals"
-      resolve' _ depth (path, usf, nextGoal:gs) stack = do
+      resolve' wildN' depth (path, usf, nextGoal:gs) stack = do
          trace "=== resolve' ==="
          trace_ "Depth"   depth
          trace_ "Unif."   usf
@@ -349,7 +349,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
          shiftCut t       = t
 
          renameVars :: [Clause] -> ([Clause],Int)
-         renameVars cs = flip runState wildN $ everywhereM (mkM rename) cs
+         renameVars cs = flip runState wildN' $ everywhereM (mkM rename) cs
          rename :: VariableName -> State Int VariableName
          rename (VariableName _ v) = pure $ VariableName depth v
          rename (Wildcard _) = do
