@@ -1,16 +1,16 @@
 module Main where
 
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Except (catchError)
 import Control.Exception (displayException)
+import Control.Monad.Except (catchError)
+import Control.Monad.Trans.Class (lift)
 
 import Data.List (intercalate)
 
 import System.Console.Haskeline
 import System.Environment (getArgs)
 
-import Paths_prolog (version)
 import Data.Version (showVersion)
+import Paths_prolog (version)
 
 import Language.Prolog
 
@@ -32,11 +32,12 @@ runMain file = do
       putStrLn "changes to the file do not require reloading"
   runInputT settings (loop NoTracing)
   where
-    settings = Settings {
-      complete = completeFilename,
-      historyFile = Just ".prolog-interpreter.history",
-      autoAddHistory = True
-      }
+    settings =
+      Settings {
+        complete = completeFilename
+        , historyFile = Just ".prolog-interpreter.history"
+        , autoAddHistory = True
+        }
     loop :: TraceMode -> InputT IO ()
     loop traceMode = do
       query <- getInputLine "?- "
@@ -47,21 +48,22 @@ runMain file = do
         Just "trace" -> loop Tracing
         Just "notrace" -> loop NoTracing
         Just q -> do
-          us <- lift $
-            catchError
-              (runQuery' traceMode file q)
-              -- simple exception handling (mainly to avoid crashes)
-              (\e -> putStrLn (displayException e) >> pure [])
+          us <-
+            lift $
+              catchError
+                (runQuery' traceMode file q)
+                -- simple exception handling (mainly to avoid crashes)
+                (\e -> putStrLn (displayException e) >> pure [])
           outputStr $ printUnifiers us
           loop traceMode
 
 printUnifiers :: [Unifier] -> String
 printUnifiers [] = "false.\n"
-printUnifiers us = unlines [ printUnifier u | u <- us ]
+printUnifiers us = unlines [printUnifier u | u <- us]
   where
     printUnifier :: Unifier -> String
     printUnifier [] = "true."
     printUnifier u = intercalate ",\n" (map printSubst u) ++ "."
 
     printSubst :: (VariableName, Term) -> String
-    printSubst (x,t) = unwords [show x, "=", show t]
+    printSubst (x, t) = unwords [show x, "=", show t]

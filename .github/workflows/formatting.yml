@@ -1,0 +1,24 @@
+---
+name: Formatting
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+permissions: read-all
+
+jobs:
+  build:
+    name: Check format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Run fourmolu
+        uses: haskell-actions/run-fourmolu@v13
+        with:
+          version: "0.20.1.0"

@@ -1,29 +1,43 @@
-{-# LANGUAGE DeriveDataTypeable, ViewPatterns, ScopedTypeVariables, DeriveGeneric, TemplateHaskell #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
-module Syntax
-   ( Term(..), var, cut
-   , Clause(..), rhs
-   , VariableName(..), Atom, Goal, Program
-   , newWildcard
-   , cons, nil, foldrPl
-   , arguments -- FIXME Should not be exposed
-   , hierarchy
-   , Operator(..), Assoc(..)
-   )
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ViewPatterns #-}
+
+module Syntax (
+  Term (..),
+  var,
+  cut,
+  Clause (..),
+  rhs,
+  VariableName (..),
+  Atom,
+  Goal,
+  Program,
+  newWildcard,
+  cons,
+  nil,
+  foldrPl,
+  arguments, -- FIXME Should not be exposed
+  hierarchy,
+  Operator (..),
+  Assoc (..),
+)
 where
 
-import Data.Generics (Data(..), Typeable)
-import Data.List (intercalate)
 import Data.Char (digitToInt)
+import Data.Generics (Data (..), Typeable)
+import Data.List (intercalate)
 import GHC.Generics (Generic)
 import Language.Haskell.TH.Lift (deriveLiftMany)
-import Language.Haskell.TH.Syntax (Lift(..))
+import Language.Haskell.TH.Syntax (Lift (..))
 
-
-data Term = Struct Atom [Term]
-          | Var VariableName
-          | Cut Int
-      deriving (Eq, Data, Typeable, Generic)
+data Term
+  = Struct Atom [Term]
+  | Var VariableName
+  | Cut Int
+  deriving (Data, Eq, Generic, Typeable)
 
 var :: String -> Term
 var = Var . VariableName 0
@@ -31,172 +45,170 @@ var = Var . VariableName 0
 cut :: Term
 cut = Cut 0
 
-data Clause = Clause { lhs :: Term, rhs_ :: [Goal] }
-            | ClauseFn { lhs :: Term, fn :: [Term] -> [Goal] }
-      deriving (Data, Typeable, Generic)
+data Clause
+  = Clause {lhs :: Term, rhs_ :: [Goal]}
+  | ClauseFn {lhs :: Term, fn :: [Term] -> [Goal]}
+  deriving (Data, Generic, Typeable)
 
 rhs :: Clause -> [Term] -> [Goal]
-rhs (Clause   _ rhs') = const rhs'
-rhs (ClauseFn _ fn' ) = fn'
+rhs (Clause _ rhs') = const rhs'
+rhs (ClauseFn _ fn') = fn'
 
 data VariableName
   = VariableName Int String
   | Wildcard (Maybe Int)
-  deriving (Eq, Data, Typeable, Ord, Generic)
+  deriving (Data, Eq, Generic, Ord, Typeable)
 
 newWildcard :: VariableName
 newWildcard = Wildcard Nothing
 
-type Atom         = String
-type Goal         = Term
-type Program      = [Clause]
+type Atom = String
+type Goal = Term
+type Program = [Clause]
 
 instance Ord Term where
-   (<=) = wildcards <=! variables <=! atoms <=! compoundTerms <=! error "incomparable"
+  (<=) = wildcards <=! variables <=! atoms <=! compoundTerms <=! error "incomparable"
 
 infixr 4 <=!
 (<=!) :: Ord a => (t -> Maybe a) -> (t -> t -> Bool) -> t -> t -> Bool
-(q <=! _) (q->Just l) (q->Just r) = l <= r
-(q <=! _) (q->Just _) _ = True
-(q <=! _) _ (q->Just _) = False
+(q <=! _) (q -> Just l) (q -> Just r) = l <= r
+(q <=! _) (q -> Just _) _ = True
+(q <=! _) _ (q -> Just _) = False
 (_ <=! c) x y = c x y
 
 wildcards :: Term -> Maybe (Maybe Int)
 wildcards (Var (Wildcard i)) = Just i
-wildcards _        = Nothing
+wildcards _ = Nothing
 
 variables :: Term -> Maybe VariableName
 variables (Var v@(VariableName _ _)) = Just v
-variables _       = Nothing
+variables _ = Nothing
 
 atoms :: Term -> Maybe [Atom]
 atoms (Struct a []) = Just [a]
-atoms _             = Nothing
+atoms _ = Nothing
 
 compoundTerms :: Term -> Maybe (Int, Atom, [Term])
 compoundTerms (Struct a ts) = Just (length ts, a, ts)
-compoundTerms _             = Nothing
-
+compoundTerms _ = Nothing
 
 instance Show Term where
-   show = prettyPrint False 0
-
+  show = prettyPrint False 0
 
 prettyPrint :: Bool -> Int -> Term -> [Char]
-prettyPrint True _ t@(Struct "," [_,_]) =
-   "(" ++ prettyPrint False 0 t ++  ")"
-
-prettyPrint f n (Struct (flip lookup operatorTable->Just (p,InfixOp assoc name)) [l,r]) =
-   parensIf (n >= p) $ prettyPrint f n_l l ++ spaced name ++ prettyPrint f n_r r
-     where (n_l,n_r) = case assoc of
-                           AssocLeft  -> (p-1, p)
-                           AssocRight -> (p, p-1)
-
-prettyPrint f n (Struct (flip lookup operatorTable->Just (p,PrefixOp name)) [r]) =
-   parensIf (n >= p) $ name ++ prettyPrint f p {- Non-associative -} r
-
-prettyPrint _ _ t@(Struct "." [_,_]) =
-   let (ts,rest) = g [] t in
-      --case guard (isNil rest) >> sequence (map toChar ts) of
-      --   Just str -> prettyPrint str
-      --   Nothing  ->
-            "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" ++ prettyPrint True 0 rest) ++  "]"
-   where g ts (Struct "." [h,t']) = g (h:ts) t'
-         g ts t' = (reverse ts, t')
-         isNil (Struct "[]" []) = True
-         isNil _                = False
-
-prettyPrint _ _ (Struct a [])   = a
-prettyPrint _ _ (Struct a ts)   = a ++ "(" ++ intercalate ", " (map (prettyPrint True 0) ts) ++ ")"
-prettyPrint _ _ (Var v)         = show v
+prettyPrint True _ t@(Struct "," [_, _]) =
+  "(" ++ prettyPrint False 0 t ++ ")"
+prettyPrint f n (Struct (flip lookup operatorTable -> Just (p, InfixOp assoc name)) [l, r]) =
+  parensIf (n >= p) $ prettyPrint f n_l l ++ spaced name ++ prettyPrint f n_r r
+  where
+    (n_l, n_r) = case assoc of
+      AssocLeft -> (p - 1, p)
+      AssocRight -> (p, p - 1)
+prettyPrint f n (Struct (flip lookup operatorTable -> Just (p, PrefixOp name)) [r]) =
+  parensIf (n >= p) $ name ++ prettyPrint f p {- Non-associative -} r
+prettyPrint _ _ t@(Struct "." [_, _]) =
+  let (ts, rest) = g [] t
+  in -- case guard (isNil rest) >> sequence (map toChar ts) of
+     --   Just str -> prettyPrint str
+     --   Nothing  ->
+     "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" ++ prettyPrint True 0 rest) ++ "]"
+  where
+    g ts (Struct "." [h, t']) = g (h : ts) t'
+    g ts t' = (reverse ts, t')
+    isNil (Struct "[]" []) = True
+    isNil _ = False
+prettyPrint _ _ (Struct a []) = a
+prettyPrint _ _ (Struct a ts) = a ++ "(" ++ intercalate ", " (map (prettyPrint True 0) ts) ++ ")"
+prettyPrint _ _ (Var v) = show v
 -- prettyPrint _ _ Wildcard        = "_"
-prettyPrint _ _ (Cut _)         = "!"
---prettyPrint _ _ ((==cut)->True) = "!"
---prettyPrint _ _ (Cut n)         = "!^" ++ show n
+prettyPrint _ _ (Cut _) = "!"
 
+-- prettyPrint _ _ ((==cut)->True) = "!"
+-- prettyPrint _ _ (Cut n)         = "!^" ++ show n
 
 spaced :: [Char] -> [Char]
-spaced s = let h = head s
-               l = last s
-           in spaceIf (h `notElem` ",;") ++ s ++ spaceIf (l /= ';')
+spaced s =
+  let
+    h = head s
+    l = last s
+  in
+    spaceIf (h `notElem` ",;") ++ s ++ spaceIf (l /= ';')
 
 spaceIf :: Bool -> String
-spaceIf True  = " "
+spaceIf True = " "
 spaceIf False = ""
 
 parensIf :: Bool -> String -> String
-parensIf True  s = "(" ++ s ++")"
+parensIf True s = "(" ++ s ++ ")"
 parensIf False s = s
 
-
-operatorTable :: [(String, (Int,Operator))]
-operatorTable = concat $ zipWith (map . g) [1..] $ hierarchy False
- where g p op@(InfixOp _ name) = (name,(p,op))
-       g p op@(PrefixOp name)  = (name,(p,op))
+operatorTable :: [(String, (Int, Operator))]
+operatorTable = concat $ zipWith (map . g) [1 ..] $ hierarchy False
+  where
+    g p op@(InfixOp _ name) = (name, (p, op))
+    g p op@(PrefixOp name) = (name, (p, op))
 
 instance Show VariableName where
-   show (VariableName 0 v) = v
-   show (VariableName i v) = v ++ subscriptDigits i
-   show (Wildcard (Just i)) = "_" ++  show i
-   show (Wildcard Nothing) = "_"
+  show (VariableName 0 v) = v
+  show (VariableName i v) = v ++ subscriptDigits i
+  show (Wildcard (Just i)) = "_" ++ show i
+  show (Wildcard Nothing) = "_"
 
 instance Show Clause where
-   show (Clause   lhs' [] ) = show lhs' ++ "."
-   show (Clause   lhs' rhs') = show lhs' ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
-   show (ClauseFn lhs' _  ) = show lhs' ++ " :- " ++ "<Haskell function>" ++ "."
-
-
-
+  show (Clause lhs' []) = show lhs' ++ "."
+  show (Clause lhs' rhs') = show lhs' ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
+  show (ClauseFn lhs' _) = show lhs' ++ " :- " ++ "<Haskell function>" ++ "."
 
 foldrPl :: (Term -> a -> a) -> a -> Term -> a
-foldrPl f k (Struct "." [h,t]) = f h (foldrPl f k t)
-foldrPl _ k (Struct "[]" [])   = k
-foldrPl _ _ Struct{}   = error "foldrPl: not a prolog list"
-foldrPl _ _ Var{}   = error "foldrPl: not a prolog list"
-foldrPl _ _ Cut{}   = error "foldrPl: not a prolog list"
+foldrPl f k (Struct "." [h, t]) = f h (foldrPl f k t)
+foldrPl _ k (Struct "[]" []) = k
+foldrPl _ _ Struct {} = error "foldrPl: not a prolog list"
+foldrPl _ _ Var {} = error "foldrPl: not a prolog list"
+foldrPl _ _ Cut {} = error "foldrPl: not a prolog list"
 
 cons :: Term -> Term -> Term
-cons t1 t2 = Struct "."  [t1,t2]
+cons t1 t2 = Struct "." [t1, t2]
 
 nil :: Term
-nil        = Struct "[]" []
+nil = Struct "[]" []
 
-data Operator = PrefixOp String
-              | InfixOp Assoc String
-data Assoc = AssocLeft
-           | AssocRight
+data Operator
+  = PrefixOp String
+  | InfixOp Assoc String
+data Assoc
+  = AssocLeft
+  | AssocRight
 
 -- operators with higher position in this list appear higher in
 -- the parsed expression tree. This is because the list is reversed
 -- before passed to the parser. FIXME: clean this up/move reverse here?
 hierarchy :: Bool -> [[Operator]]
 hierarchy ignoreConjunction =
-   --[ [ InfixOp NonAssoc "-->", InfixOp NonAssoc ":-" ]
-   [ [ infixR ";" ]
-   , [ infixR "," | ignoreConjunction ]
-   , [ prefix "\\+" ]
-   , map infixL ["<", "=..", "=:=", "=\\=", "=<", "=", ">=", ">", "\\=", "is", "==", "@<", "@=<", "@>=", "@>"]
-   , map infixL ["+", "-", "\\"]
-   , [ infixL "*"]
-   , [ infixL "mod" ]
-   , [ infixL "div" ]
-   , [ infixL "^", infixL "**"]
-   , [ prefix "-" ]
-   , [ prefix "$" ] -- used for quasi quotation
-   ]
- where
-   prefix = PrefixOp
-   infixL = InfixOp AssocLeft
-   infixR = InfixOp AssocRight
+  -- [ [ InfixOp NonAssoc "-->", InfixOp NonAssoc ":-" ]
+  [ [infixR ";"]
+  , [infixR "," | ignoreConjunction]
+  , [prefix "\\+"]
+  , map infixL ["<", "=..", "=:=", "=\\=", "=<", "=", ">=", ">", "\\=", "is", "==", "@<", "@=<", "@>=", "@>"]
+  , map infixL ["+", "-", "\\"]
+  , [infixL "*"]
+  , [infixL "mod"]
+  , [infixL "div"]
+  , [infixL "^", infixL "**"]
+  , [prefix "-"]
+  , [prefix "$"] -- used for quasi quotation
+  ]
+  where
+    prefix = PrefixOp
+    infixL = InfixOp AssocLeft
+    infixR = InfixOp AssocRight
 
-
---infix 6 \\
---x \\ y = Struct "\\" [x,y]
+-- infix 6 \\
+-- x \\ y = Struct "\\" [x,y]
 
 arguments :: [a] -> a -> a -> [a]
-arguments ts xs ds = ts ++ [ xs, ds ]
--- arguments ts xs ds = [ xs \\ ds ] ++ ts
+arguments ts xs ds = ts ++ [xs, ds]
 
+-- arguments ts xs ds = [ xs \\ ds ] ++ ts
 
 subscriptDigits :: Int -> String
 subscriptDigits 0 = "₀"
@@ -210,12 +222,11 @@ subscriptDigits 7 = "₇"
 subscriptDigits 8 = "₈"
 subscriptDigits 9 = "₉"
 subscriptDigits i
-  | i < 0     = error "negative number in identifier subscript"
+  | i < 0 = error "negative number in identifier subscript"
   | otherwise = concatMap (subscriptDigits . digitToInt) $ show i
-
 
 $(deriveLiftMany [''Term, ''VariableName, ''Clause])
 
 instance Lift ([Term] -> [Goal]) where
-   lift _ = error "Clauses using Haskell functions can't be lifted."
-   liftTyped = error "Clauses using Haskell functions can't be lifted."
+  lift _ = error "Clauses using Haskell functions can't be lifted."
+  liftTyped = error "Clauses using Haskell functions can't be lifted."
