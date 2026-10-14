@@ -28,7 +28,6 @@ import Text.Parsec (
   option,
   parse,
   parserFail,
-  try,
   upper,
   (<?>),
   (<|>),
@@ -166,9 +165,6 @@ variable =
 vname :: ParsecT String () Identity VariableName
 vname = lookAhead upper >> (VariableName 0 <$> identifier)
 
-functor :: ParsecT String () Identity String
-functor = fst <$> functorWithSpelling
-
 functorWithSpelling :: ParsecT String () Identity (String, String)
 functorWithSpelling =
       (\f -> (f, f)) <$> (lookAhead lower >> identifier)
@@ -178,23 +174,19 @@ functorWithSpelling =
 
 struct :: ParsecT String () Identity Term
 struct = do
-  try structWithArgs <|> structWithoutArgs
+  startPos <- getPosition
+  (f, spelling) <- functorWithSpelling
+  endPos <- getPosition
+  nextIsArguments <- option False $ True <$ lookAhead (char '(')
+  case nextIsArguments of
+    True
+      | endPos == updatePosString startPos spelling ->
+          Struct f <$> parens (commaSep1 termWithoutConjunction)
+      | otherwise ->
+          parserFail "whitespace between predicate and arguments"
+    False ->
+      return (Struct f [])
   where
-    structWithArgs = do
-      startPos <- getPosition
-      (f, spelling) <- functorWithSpelling
-      endPos <- getPosition
-      ensureAdjacentFunctor startPos endPos spelling
-      ts <- parens $ commaSep1 termWithoutConjunction
-      return (Struct f ts)
-
-    structWithoutArgs = Struct <$> functor <*> pure []
-
-    ensureAdjacentFunctor startPos endPos spelling =
-      if endPos == updatePosString startPos spelling
-            then return ()
-            else parserFail "whitespace between predicate and arguments"
-
 operatorLiteral :: ParsecT String () Identity Term
 operatorLiteral = Struct <$> operator <*> pure []
 
