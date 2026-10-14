@@ -113,7 +113,8 @@ builtins =
   , Clause
       (Struct "phrase" [var "Rule", var "InputList", var "Rest"])
       [ Struct "=.." [var "Rule", var "L"]
-      , Struct "append" [var "L", foldr cons nil (arguments [] {- already in L -} (var "InputList") (var "Rest")), var "L1"] -- FIXME This makes assumptions about "arguments"
+      , -- FIXME This makes assumptions about "arguments"
+        Struct "append" [var "L", foldr cons nil (arguments [] {- already in L -} (var "InputList") (var "Rest")), var "L1"]
       , Struct "=.." [var "Goal", var "L1"]
       , var "Goal"
       ]
@@ -222,7 +223,8 @@ resolveN_ n program goals = Pipes.toListM $ Pipes.take n <-< void (resolveP prog
 
 resolveP :: forall m. (Monad m, MonadError Error m, MonadGraphGen m, MonadTrace m) => Program -> [Goal] -> Producer Unifier m [Unifier]
 -- Yield all unifiers that resolve <goal> using the clauses from <program>.
-resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [], goals') []) (createDB (builtins ++ program) ["false", "fail"]) -- NOTE Is it a good idea to "hardcode" the builtins like this?
+-- NOTE Is it a good idea to "hardcode" the builtins like this?
+resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [], goals') []) (createDB (builtins ++ program) ["false", "fail"])
   where
     (goals', wildN) = flip runState 1 $ everywhereM (mkM renameW) goals
     renameW :: VariableName -> State Int VariableName
@@ -232,9 +234,9 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
       pure $ Wildcard (Just n)
     renameW w@(Wildcard (Just _)) = pure w
     renameW v@(VariableName _ _) = pure v
-    cleanup = filter (queryVarialbes . fst)
-    queryVarialbes (VariableName i _) = i == 0
-    queryVarialbes _ = False
+    cleanup = filter (queryVariables . fst)
+    queryVariables (VariableName i _) = i == 0
+    queryVariables _ = False
 
     whenPredicateIsUnknown sig action = asks (hasPredicate sig) >>= flip unless action
 
