@@ -38,6 +38,7 @@ import Text.Parsec.Expr (
   buildExpressionParser,
  )
 import qualified Text.Parsec.Expr as Parsec (Assoc (..), Operator)
+import Text.Parsec.Pos (updatePosString)
 import qualified Text.Parsec.Token as P
 
 import Data.Functor.Identity (Identity)
