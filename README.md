@@ -1,1 +1,3 @@
-Used in https://github.com/fmidue/prolog-graph-lib and https://github.com/fmidue/prolog-programming-task.
+# Prolog Interpreter
+
+Used in <https://github.com/fmidue/prolog-graph-lib> and <https://github.com/fmidue/prolog-programming-task>.
