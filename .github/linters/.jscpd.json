@@ -1,0 +1,8 @@
+{
+  "threshold": 2,
+  "reporters": ["consoleFull"],
+  "ignore": ["**/.github/**", "**/test/**"],
+  "minLines": 2,
+  "maxLines": 2000,
+  "absolute": true
+}

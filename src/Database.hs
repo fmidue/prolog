@@ -49,10 +49,20 @@ getClauses :: Term -> Database -> [Clause]
 getClauses term (DB index) = fromMaybe [] $ (`Map.lookup` index) =<< termSignature term
 
 asserta :: Term -> Database -> Database
-asserta fact (DB index) = DB $ maybe index (\sig -> Map.insertWith (++) sig [Clause fact []] index) (termSignature fact)
+asserta fact (DB index) =
+  DB $
+    maybe
+      index
+      (\sig -> Map.insertWith (++) sig [Clause fact []] index)
+      (termSignature fact)
 
 assertz :: Term -> Database -> Database
-assertz fact (DB index) = DB $ maybe index (\sig -> Map.insertWith (flip (++)) sig [Clause fact []] index) (termSignature fact)
+assertz fact (DB index) =
+  DB $
+    maybe
+      index
+      (\sig -> Map.insertWith (flip (++)) sig [Clause fact []] index)
+      (termSignature fact)
 
 abolish :: Term -> Database -> Database
 abolish fact (DB index) = DB $ maybe index (\sig -> Map.adjust deleteFact sig index) (termSignature fact)

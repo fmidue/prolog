@@ -92,7 +92,8 @@ clause = do
     translate (Struct a ts, rhs') =
       let
         lhs' = Struct a (arguments ts (head vars) (last vars))
-        vars = map (var . ("d_" ++) . (a ++) . show) [0 .. length rhs'] -- We explicitly choose otherwise invalid variable names
+        -- We explicitly choose otherwise invalid variable names
+        vars = map (var . ("d_" ++) . (a ++) . show) [0 .. length rhs']
         rhs'' = sequenceA $ zipWith3 translate' rhs' vars (tail vars)
       in
         Clause lhs' <$> rhs''
@@ -138,8 +139,10 @@ bottom =
     <|> list
     <|> number
     <|> stringLiteral
-    <|> cut <$ char '!'
-    <|> Struct "{}" <$> braces terms
+    <|> cut
+      <$ char '!'
+    <|> Struct "{}"
+      <$> braces terms
     <|> parens term
     <|> operatorLiteral
 
@@ -219,7 +222,29 @@ langProlog =
     }
 
 operatorNames :: [String]
-operatorNames = [";", ",", "<", "=..", "=:=", "=\\=", "=<", "=", ">=", ">", "\\=", "is", "^", "**", "*", "+", "-", "\\", "mod", "div", "\\+"]
+operatorNames =
+  [ ";"
+  , ","
+  , "<"
+  , "=.."
+  , "=:="
+  , "=\\="
+  , "=<"
+  , "="
+  , ">="
+  , ">"
+  , "\\="
+  , "is"
+  , "^"
+  , "**"
+  , "*"
+  , "+"
+  , "-"
+  , "\\"
+  , "mod"
+  , "div"
+  , "\\+"
+  ]
 
 -- lexer
 lexer :: P.GenTokenParser String () Identity

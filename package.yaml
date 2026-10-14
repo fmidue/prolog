@@ -1,13 +1,14 @@
-name:                prolog
-version:             0.4.2
-synopsis:            A Prolog interpreter written in Haskell.
-description:         A Prolog interpreter written in Haskell. Implements a subset of the Prolog language.
-license:             PublicDomain
-author:              Matthias Bartsch
-maintainer:          Marcel Fourné (haskell@marcelfourne.de)
-category:            Language
-build-type:          Simple
-github:              mfourne/prolog
+---
+name: prolog
+version: 0.4.2
+synopsis: A Prolog interpreter written in Haskell.
+description: A Prolog interpreter written in Haskell. Implements a subset of the Prolog language.
+license: PublicDomain
+author: Matthias Bartsch
+maintainer: Marcel Fourné (haskell@marcelfourne.de)
+category: Language
+build-type: Simple
+github: mfourne/prolog
 
 dependencies:
   - base >=4 && <5
@@ -36,26 +37,26 @@ library:
 
 executables:
   prolog-interpreter:
-    main:                Main.hs
-    source-dirs:         app
+    main: Main.hs
+    source-dirs: app
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -O2
     dependencies:
-    - prolog
-    - haskeline
+      - prolog
+      - haskeline
 
 tests:
   spec:
     source-dirs: specs
     main: Main.hs
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -O2
     dependencies:
       - prolog
       - directory
@@ -68,10 +69,10 @@ benchmarks:
     source-dirs: bench
     main: Main.hs
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -O2
     dependencies:
       - prolog
       - deepseq
