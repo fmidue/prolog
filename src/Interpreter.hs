@@ -232,9 +232,9 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
       pure $ Wildcard (Just n)
     renameW w@(Wildcard (Just _)) = pure w
     renameW v@(VariableName _ _) = pure v
-    cleanup = filter (queryVarialbes . fst)
-    queryVarialbes (VariableName i _) = i == 0
-    queryVarialbes _ = False
+    cleanup = filter (queryVariables . fst)
+    queryVariables (VariableName i _) = i == 0
+    queryVariables _ = False
 
     whenPredicateIsUnknown sig action = asks (hasPredicate sig) >>= flip unless action
 
