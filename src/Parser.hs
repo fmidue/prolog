@@ -6,6 +6,7 @@ module Parser
 import Text.Parsec
     ( char,
       digit,
+      getPosition, 
       letter,
       lower,
       noneOf,
@@ -21,7 +22,8 @@ import Text.Parsec
       parse,
       parserFail,
       ParseError,
-      ParsecT )
+      ParsecT,
+      try )
 import Text.Parsec.Expr
     ( buildExpressionParser, Operator(Infix, Prefix) )
 import qualified Text.Parsec.Expr as Parsec (Operator, Assoc(..))
