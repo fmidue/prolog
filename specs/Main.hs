@@ -7,6 +7,7 @@ import Data.Either (isLeft)
 import System.Console.ANSI
 import System.Directory
 import System.Environment (getArgs)
+import System.Exit (exitFailure, exitSuccess)
 import System.FilePath
 
 import Test.HUnit hiding (path)
@@ -31,7 +32,11 @@ main = do
     case parse specFile fname text of
       Left err -> return (dropExtension fname ~: (assertFailure (show err) :: IO ()))
       Right tests -> return (dropExtension fname ~: tests p)
-  colorizeResult =<< runTestTT (test tests)
+  counts' <- runTestTT (test tests)
+  colorizeResult counts'
+  if errors counts' + failures counts' == 0
+    then exitSuccess
+    else exitFailure
 
 colorizeResult :: Counts -> IO ()
 colorizeResult result = do
