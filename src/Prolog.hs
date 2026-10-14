@@ -1,62 +1,92 @@
-module Prolog
-   ( Term(..), var, cut
-   , Clause(..), rhs
-   , VariableName(..), Atom, Unifier, Substitution, Program, Goal
-   , unify, unifyWithOccursCheck
-   , apply, substitute
-   , MonadTrace(..)
-   , withTrace
-   , MonadGraphGen(..)
-   , runNoGraphT
-   , resolve, resolve_, resolveN, resolveN_, resolveP
-   , (+++)
-   , consult, consultString, parseQuery
-   , program, whitespace, clause, terms, term, bottom, vname
-   , runQuery, TraceMode(..), runQuery', runQueryN, runQueryN'
-   )
+module Prolog (
+  Term (..),
+  var,
+  cut,
+  Clause (..),
+  rhs,
+  VariableName (..),
+  Atom,
+  Unifier,
+  Substitution,
+  Program,
+  Goal,
+  unify,
+  unifyWithOccursCheck,
+  apply,
+  substitute,
+  MonadTrace (..),
+  withTrace,
+  MonadGraphGen (..),
+  runNoGraphT,
+  resolve,
+  resolve_,
+  resolveN,
+  resolveN_,
+  resolveP,
+  (+++),
+  consult,
+  consultString,
+  parseQuery,
+  program,
+  whitespace,
+  clause,
+  terms,
+  term,
+  bottom,
+  vname,
+  runQuery,
+  TraceMode (..),
+  runQuery',
+  runQueryN,
+  runQueryN',
+)
 where
 
-import Syntax
-    ( cut,
-      rhs,
-      var,
-      Atom,
-      Clause(..),
-      Goal,
-      Program,
-      Term(..),
-      VariableName(..) )
-import Parser
-    ( bottom,
-      clause,
-      consult,
-      consultString,
-      parseQuery,
-      program,
-      term,
-      terms,
-      vname,
-      whitespace )
-import Unifier
-    ( (+++),
-      apply,
-      substitute,
-      unify,
-      unifyWithOccursCheck,
-      Substitution,
-      Unifier )
-import Interpreter
-    ( resolve,
-      resolveN,
-      resolveN_,
-      resolveP,
-      resolve_,
-      MonadGraphGen(..),
-      MonadTrace(..),
-      runNoGraphT,
-      withTrace )
+import Interpreter (
+  MonadGraphGen (..),
+  MonadTrace (..),
+  resolve,
+  resolveN,
+  resolveN_,
+  resolveP,
+  resolve_,
+  runNoGraphT,
+  withTrace,
+ )
+import Parser (
+  bottom,
+  clause,
+  consult,
+  consultString,
+  parseQuery,
+  program,
+  term,
+  terms,
+  vname,
+  whitespace,
+ )
+import Syntax (
+  Atom,
+  Clause (..),
+  Goal,
+  Program,
+  Term (..),
+  VariableName (..),
+  cut,
+  rhs,
+  var,
+ )
+import Unifier (
+  Substitution,
+  Unifier,
+  apply,
+  substitute,
+  unify,
+  unifyWithOccursCheck,
+  (+++),
+ )
 
-import Control.Monad.Trans.Writer ( WriterT(runWriterT) )
+import Control.Monad.Trans.Writer (WriterT (runWriterT))
 
 runQuery :: Maybe FilePath -> String -> IO [Unifier]
 runQuery = runQuery' NoTracing
@@ -74,7 +104,7 @@ runQuery' t mFile qstr = do
         Right q -> case t of
           Tracing -> case runWriterT $ resolve p q of
             Left e -> printError e
-            Right (u,t') -> putStrLn t' >> pure u
+            Right (u, t') -> putStrLn t' >> pure u
           NoTracing -> case resolve p q of
             Left e -> printError e
             Right u -> pure u
@@ -99,7 +129,7 @@ runQueryN' t n mFile qstr = do
         Right q -> case t of
           Tracing -> case runWriterT $ resolveN n p q of
             Left e -> printError e
-            Right (u,t') -> putStrLn t' >> pure u
+            Right (u, t') -> putStrLn t' >> pure u
           NoTracing -> case resolveN n p q of
             Left e -> printError e
             Right u -> pure u
