@@ -183,7 +183,7 @@ struct = do
       | endPos == updatePosString startPos spelling ->
           Struct f <$> parens (commaSep1 termWithoutConjunction)
       | otherwise ->
-          parserFail "whitespace between predicate and arguments"
+          parserFail "whitespace between symbol name and arguments"
     False ->
       return (Struct f [])
 
