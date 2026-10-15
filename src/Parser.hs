@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Parser (
   consult,
   consultString,
@@ -43,9 +45,9 @@ import qualified Text.Parsec.Token as P
 import Data.Functor.Identity (Identity)
 import Syntax (
   Assoc (AssocLeft, AssocRight),
-  Clause (Clause),
+  Atom,
+  Goal,
   Operator (..),
-  Program,
   Term (..),
   VariableName (VariableName),
   arguments,
@@ -58,19 +60,19 @@ import Syntax (
   var,
  )
 
-consult :: FilePath -> IO (Either ParseError Program)
+consult :: FilePath -> IO (Either ParseError [(Atom, [Term], [Goal])])
 consult = fmap consultString . readFile
 
-consultString :: String -> Either ParseError Program
+consultString :: String -> Either ParseError [(Atom, [Term], [Goal])]
 consultString = parse (whitespace >> program <* eof) "(input)"
 
 parseQuery :: String -> Either ParseError [Term]
 parseQuery = parse (whitespace >> terms <* eof) "(query)"
 
-program :: ParsecT String () Identity [Clause]
+program :: ParsecT String () Identity [(Atom, [Term], [Goal])]
 program = many (clause <* reservedOp "." <* whitespace)
 
-clause :: ParsecT String () Identity Clause
+clause :: ParsecT String () Identity (Atom, [Term], [Goal])
 clause = do
   t <- struct <* whitespace
   dcg t <|> normal t
@@ -80,7 +82,10 @@ clause = do
         -- custom "expecting" label to avoid showing ":-" twice
         reservedOp ":-" <|> reservedOp ":−" <?> show ":-"
         terms
-      return (Clause t ts)
+      -- return (Clause t ts)
+      case t of
+        Struct name args -> return (name, args, ts)
+        _ -> parserFail "unexpected term type at clause head"
 
     dcg t = do
       reservedOp "-->" <* whitespace
@@ -91,12 +96,11 @@ clause = do
 
     translate (Struct a ts, rhs') =
       let
-        lhs' = Struct a (arguments ts (head vars) (last vars))
         -- We explicitly choose otherwise invalid variable names
         vars = map (var . ("d_" ++) . (a ++) . show) [0 .. length rhs']
         rhs'' = sequenceA $ zipWith3 translate' rhs' vars (tail vars)
       in
-        Clause lhs' <$> rhs''
+        (a,arguments ts (head vars) (last vars),) <$> rhs''
     translate (Var _, _) = Nothing
     translate (Cut _, _) = Nothing
 
