@@ -61,7 +61,7 @@ import Database (
   termSignature,
  )
 import Syntax (
-  Clause (Clause, ClauseFn, lhs),
+  Clause (Clause, ClauseFn),
   Goal,
   Program,
   Term (..),
@@ -70,6 +70,7 @@ import Syntax (
   cons,
   cut,
   foldrPl,
+  lhs,
   newWildcard,
   nil,
   rhs,
@@ -79,39 +80,41 @@ import Unifier (Unifier, apply, unify, (+++))
 
 builtins :: [Clause]
 builtins =
-  [ Clause (Struct "=" [var "X", var "X"]) []
-  , Clause (Struct "\\=" [var "X", var "X"]) [cut, Struct "false" []]
-  , Clause (Struct "\\=" [var "X", var "Y"]) []
-  , Clause (Struct "not" [var "A"]) [var "A", cut, Struct "false" []]
-  , Clause (Struct "not" [var "A"]) []
-  , Clause (Struct "\\+" [var "A"]) [var "A", cut, Struct "false" []]
-  , Clause (Struct "\\+" [var "A"]) []
-  , Clause (Struct "true" []) []
-  , Clause (Struct "," [var "A", var "B"]) [var "A", var "B"]
-  , Clause (Struct ";" [var "A", Var newWildcard]) [var "A"]
-  , Clause (Struct ";" [Var newWildcard, var "B"]) [var "B"]
-  , ClauseFn (Struct "is" [var "L", var "R"]) is
-  , ClauseFn (Struct "<" [var "N", var "M"]) (binaryIntegerPredicate (<))
-  , ClauseFn (Struct ">" [var "N", var "M"]) (binaryIntegerPredicate (>))
-  , ClauseFn (Struct "=<" [var "N", var "M"]) (binaryIntegerPredicate (<=))
-  , ClauseFn (Struct ">=" [var "N", var "M"]) (binaryIntegerPredicate (>=))
-  , ClauseFn (Struct "=:=" [var "N", var "M"]) (binaryIntegerPredicate (==))
-  , ClauseFn (Struct "=\\=" [var "N", var "M"]) (binaryIntegerPredicate (/=))
-  , ClauseFn (Struct "@<" [var "T1", var "T2"]) (binaryPredicate (<))
-  , ClauseFn (Struct "@>" [var "T1", var "T2"]) (binaryPredicate (>))
-  , ClauseFn (Struct "@=<" [var "T1", var "T2"]) (binaryPredicate (<=))
-  , ClauseFn (Struct "@>=" [var "T1", var "T2"]) (binaryPredicate (>=))
-  , ClauseFn (Struct "==" [var "T1", var "T2"]) (binaryPredicate (==))
+  [ Clause "=" [var "X", var "X"] []
+  , Clause "\\=" [var "X", var "X"] [cut, Struct "false" []]
+  , Clause "\\=" [var "X", var "Y"] []
+  , Clause "not" [var "A"] [var "A", cut, Struct "false" []]
+  , Clause "not" [var "A"] []
+  , Clause "\\+" [var "A"] [var "A", cut, Struct "false" []]
+  , Clause "\\+" [var "A"] []
+  , Clause "true" [] []
+  , Clause "," [var "A", var "B"] [var "A", var "B"]
+  , Clause ";" [var "A", Var newWildcard] [var "A"]
+  , Clause ";" [Var newWildcard, var "B"] [var "B"]
+  , ClauseFn "is" [var "L", var "R"] is
+  , ClauseFn "<" [var "N", var "M"] (binaryIntegerPredicate (<))
+  , ClauseFn ">" [var "N", var "M"] (binaryIntegerPredicate (>))
+  , ClauseFn "=<" [var "N", var "M"] (binaryIntegerPredicate (<=))
+  , ClauseFn ">=" [var "N", var "M"] (binaryIntegerPredicate (>=))
+  , ClauseFn "=:=" [var "N", var "M"] (binaryIntegerPredicate (==))
+  , ClauseFn "=\\=" [var "N", var "M"] (binaryIntegerPredicate (/=))
+  , ClauseFn "@<" [var "T1", var "T2"] (binaryPredicate (<))
+  , ClauseFn "@>" [var "T1", var "T2"] (binaryPredicate (>))
+  , ClauseFn "@=<" [var "T1", var "T2"] (binaryPredicate (<=))
+  , ClauseFn "@>=" [var "T1", var "T2"] (binaryPredicate (>=))
+  , ClauseFn "==" [var "T1", var "T2"] (binaryPredicate (==))
   , builtinSort
-  , ClauseFn (Struct "=.." [var "Term", var "List"]) univ
-  , ClauseFn (Struct "atom" [var "T"]) atom
-  , ClauseFn (Struct "char_code" [var "Atom", var "Code"]) char_code
-  , ClauseFn (Struct "number" [var "T"]) number
+  , ClauseFn "=.." [var "Term", var "List"] univ
+  , ClauseFn "atom" [var "T"] atom
+  , ClauseFn "char_code" [var "Atom", var "Code"] char_code
+  , ClauseFn "number" [var "T"] number
   , Clause
-      (Struct "phrase" [var "RuleName", var "InputList"])
+      "phrase"
+      [var "RuleName", var "InputList"]
       [Struct "phrase" [var "RuleName", var "InputList", Struct "[]" []]]
   , Clause
-      (Struct "phrase" [var "Rule", var "InputList", var "Rest"])
+      "phrase"
+      [var "Rule", var "InputList", var "Rest"]
       [ Struct "=.." [var "Rule", var "L"]
       , -- FIXME This makes assumptions about "arguments"
         Struct "append" [var "L", foldr cons nil (arguments [] {- already in L -} (var "InputList") (var "Rest")), var "L1"]
@@ -156,7 +159,7 @@ builtins =
     number [Struct (reads -> [(_ :: Integer, "")]) []] = []
     number _ = [Struct "false" []]
 
-    builtinSort = ClauseFn (Struct "sort" [var "Input", var "Output"]) (function sort_pl)
+    builtinSort = ClauseFn "sort" [var "Input", var "Output"] (function sort_pl)
       where
         sort_pl = foldr cons nil . nub . sort . foldrPl (:) []
         function :: (Term -> Term) -> ([Term] -> [Goal])
@@ -300,7 +303,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
       createConnections (path, usf, goals'') [(1 : path, [], [])] [(1 : path, usf, gs)]
 
       clauses <- asks (getClauses t)
-      case [t' | Clause t' [] <- clauses, isJust (unify t t')] of
+      case [t' | c@(Clause _ _ []) <- clauses, let t' = lhs c, isJust (unify t t')] of
         [] -> return (fail "retract/1")
         (fact : _) -> local (abolish fact) $ resolve' wildN' depth (1 : path, usf, gs) stack
     resolve' wildN' depth (path, usf, goals''@(nextGoal@(Struct "=" [l, r]) : gs)) stack = do

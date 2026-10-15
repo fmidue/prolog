@@ -100,7 +100,7 @@ runQuery' t mFile qstr = do
     Nothing -> return $ Right []
   case r of
     Right p -> do
-      let p' = map (\(name, args, goals) -> Clause (Struct name args) goals) p
+      let p' = map (\(name, args, goals) -> Clause name args goals) p
       case parseQuery qstr of
         Right q -> case t of
           Tracing -> case runWriterT $ resolve p' q of
@@ -126,7 +126,7 @@ runQueryN' t n mFile qstr = do
     Nothing -> return $ Right []
   case r of
     Right p -> do
-      let p' = map (\(name, args, goals) -> Clause (Struct name args) goals) p
+      let p' = map (\(name, args, goals) -> Clause name args goals) p
       case parseQuery qstr of
         Right q -> case t of
           Tracing -> case runWriterT $ resolveN n p' q of

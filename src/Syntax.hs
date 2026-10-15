@@ -23,6 +23,7 @@ module Syntax (
   hierarchy,
   Operator (..),
   Assoc (..),
+  lhs,
 )
 where
 
@@ -46,13 +47,17 @@ cut :: Term
 cut = Cut 0
 
 data Clause
-  = Clause {lhs :: Term, rhs_ :: [Goal]}
-  | ClauseFn {lhs :: Term, fn :: [Term] -> [Goal]}
+  = Clause {predicateName :: Atom, predicateArgs :: [Term], rhs_ :: [Goal]}
+  | ClauseFn {predicateName :: Atom, predicateArgs :: [Term], fn :: [Term] -> [Goal]}
   deriving (Data, Generic, Typeable)
 
+lhs :: Clause -> Term
+lhs (Clause name args _) = Struct name args
+lhs (ClauseFn name args _) = Struct name args
+
 rhs :: Clause -> [Term] -> [Goal]
-rhs (Clause _ rhs') = const rhs'
-rhs (ClauseFn _ fn') = fn'
+rhs (Clause _ _ rhs') = const rhs'
+rhs (ClauseFn _ _ fn') = fn'
 
 data VariableName
   = VariableName Int String
@@ -158,9 +163,9 @@ instance Show VariableName where
   show (Wildcard Nothing) = "_"
 
 instance Show Clause where
-  show (Clause lhs' []) = show lhs' ++ "."
-  show (Clause lhs' rhs') = show lhs' ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
-  show (ClauseFn lhs' _) = show lhs' ++ " :- " ++ "<Haskell function>" ++ "."
+  show c@(Clause _ _ []) = show (lhs c) ++ "."
+  show c@(Clause _ _ rhs') = show (lhs c) ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
+  show c@(ClauseFn {}) = show (lhs c) ++ " :- " ++ "<Haskell function>" ++ "."
 
 foldrPl :: (Term -> a -> a) -> a -> Term -> a
 foldrPl f k (Struct "." [h, t]) = f h (foldrPl f k t)

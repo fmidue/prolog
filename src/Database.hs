@@ -21,7 +21,7 @@ import qualified Data.Map.Strict as Map (
  )
 
 import Data.Maybe (fromMaybe)
-import Syntax (Atom, Clause (Clause, lhs), Term (..))
+import Syntax (Atom, Clause (Clause), Term (..), lhs)
 
 data Signature = Signature Atom Int deriving (Eq, Ord)
 instance Show Signature where
@@ -49,24 +49,26 @@ getClauses :: Term -> Database -> [Clause]
 getClauses term (DB index) = fromMaybe [] $ (`Map.lookup` index) =<< termSignature term
 
 asserta :: Term -> Database -> Database
-asserta fact (DB index) =
+asserta fact@(Struct name args) (DB index) =
   DB $
     maybe
       index
-      (\sig -> Map.insertWith (++) sig [Clause fact []] index)
+      (\sig -> Map.insertWith (++) sig [Clause name args []] index)
       (termSignature fact)
+asserta _ _ = error ""
 
 assertz :: Term -> Database -> Database
-assertz fact (DB index) =
+assertz fact@(Struct name args) (DB index) =
   DB $
     maybe
       index
-      (\sig -> Map.insertWith (flip (++)) sig [Clause fact []] index)
+      (\sig -> Map.insertWith (flip (++)) sig [Clause name args []] index)
       (termSignature fact)
+assertz _ _ = error ""
 
 abolish :: Term -> Database -> Database
 abolish fact (DB index) = DB $ maybe index (\sig -> Map.adjust deleteFact sig index) (termSignature fact)
   where
-    deleteFact (Clause t [] : cs) | t == fact = cs
+    deleteFact (c@(Clause _ _ []) : cs) | lhs c == fact = cs
     deleteFact (_ : cs) = cs
     deleteFact [] = []

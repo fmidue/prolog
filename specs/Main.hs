@@ -42,7 +42,7 @@ main = do
       if hasFixture
         then consult fixture
         else return $ Right []
-    let p' = map (\(name, args', goals) -> Clause (Struct name args') goals) <$> p
+    let p' = map (\(name, args', goals) -> Clause name args' goals) <$> p
     text <- readFile fname
     case parse specFile fname text of
       Left err -> return (dropExtension fname ~: (assertFailure (show err) :: IO ()))
