@@ -170,10 +170,10 @@ vname = lookAhead upper >> (VariableName 0 <$> identifier)
 
 functorWithSpelling :: ParsecT String () Identity (String, String)
 functorWithSpelling =
-      (\f -> (f, f)) <$> (lookAhead lower >> identifier)
-  <|> (\f -> (f, f)) <$> operator
-  <|> (\f -> (f, "'" ++ f ++ "'")) <$> between (char '\'') (char '\'') (many (noneOf "'"))
-  <?> "functor"
+  (\f -> (f, f)) <$> (lookAhead lower >> identifier)
+    <|> (\f -> (f, f)) <$> operator
+    <|> (\f -> (f, "'" ++ f ++ "'")) <$> between (char '\'') (char '\'') (many (noneOf "'"))
+    <?> "functor"
 
 struct :: ParsecT String () Identity Term
 struct = do
