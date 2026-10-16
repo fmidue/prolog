@@ -61,7 +61,7 @@ import Database (
   termSignature,
  )
 import Syntax (
-  Clause (Clause, ClauseFn),
+  Clause (..),
   Goal,
   Program,
   Term (..),
@@ -70,7 +70,6 @@ import Syntax (
   cons,
   cut,
   foldrPl,
-  lhs,
   newWildcard,
   nil,
   rhs,
@@ -303,7 +302,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
       createConnections (path, usf, goals'') [(1 : path, [], [])] [(1 : path, usf, gs)]
 
       clauses <- asks (getClauses t)
-      case [t' | c@(Clause _ _ []) <- clauses, let t' = lhs c, isJust (unify t t')] of
+      case [t' | Clause name args [] <- clauses, let t' = Struct name args, isJust (unify t t')] of
         [] -> return (fail "retract/1")
         (fact : _) -> local (abolish fact) $ resolve' wildN' depth (1 : path, usf, gs) stack
     resolve' wildN' depth (path, usf, goals''@(nextGoal@(Struct "=" [l, r]) : gs)) stack = do
@@ -357,7 +356,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
           let (clauses', newWildN) = renameVars clauses
           let l = do
                 (i, clause) <- zip [1 ..] clauses'
-                u <- unify (apply usf nextGoal) (lhs clause)
+                u <- unify (apply usf nextGoal) (Struct (predicateName clause) (predicateArgs clause))
                 return (i : path, u, rhs clause (map snd u))
           return (newWildN, l)
 

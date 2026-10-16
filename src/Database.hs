@@ -21,7 +21,7 @@ import qualified Data.Map.Strict as Map (
  )
 
 import Data.Maybe (fromMaybe)
-import Syntax (Atom, Clause (Clause), Term (..), lhs)
+import Syntax (Atom, Clause (Clause, predicateArgs, predicateName), Term (..))
 
 data Signature = Signature Atom Int deriving (Eq, Ord)
 instance Show Signature where
@@ -41,7 +41,12 @@ createDB :: Foldable t => t Clause -> [Atom] -> Database
 createDB clauses emptyPredicates =
   DB $
     foldr
-      (\clause -> maybe id (\sig -> Map.insertWith (++) sig [clause]) (termSignature (lhs clause)))
+      ( \clause ->
+          maybe
+            id
+            (\sig -> Map.insertWith (++) sig [clause])
+            (termSignature (Struct (predicateName clause) (predicateArgs clause)))
+      )
       (Map.fromList [(Signature name 0, []) | name <- emptyPredicates])
       clauses
 
@@ -69,6 +74,6 @@ assertz _ db = db
 abolish :: Term -> Database -> Database
 abolish fact (DB index) = DB $ maybe index (\sig -> Map.adjust deleteFact sig index) (termSignature fact)
   where
-    deleteFact (c@(Clause _ _ []) : cs) | lhs c == fact = cs
+    deleteFact (Clause name args [] : cs) | Struct name args == fact = cs
     deleteFact (_ : cs) = cs
     deleteFact [] = []

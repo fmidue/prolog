@@ -23,7 +23,6 @@ module Syntax (
   hierarchy,
   Operator (..),
   Assoc (..),
-  lhs,
 )
 where
 
@@ -50,10 +49,6 @@ data Clause
   = Clause {predicateName :: Atom, predicateArgs :: [Term], rhs_ :: [Goal]}
   | ClauseFn {predicateName :: Atom, predicateArgs :: [Term], fn :: [Term] -> [Goal]}
   deriving (Data, Generic, Typeable)
-
-lhs :: Clause -> Term
-lhs (Clause name args _) = Struct name args
-lhs (ClauseFn name args _) = Struct name args
 
 rhs :: Clause -> [Term] -> [Goal]
 rhs (Clause _ _ rhs') = const rhs'
@@ -163,9 +158,9 @@ instance Show VariableName where
   show (Wildcard Nothing) = "_"
 
 instance Show Clause where
-  show c@(Clause _ _ []) = show (lhs c) ++ "."
-  show c@(Clause _ _ rhs') = show (lhs c) ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
-  show c@(ClauseFn {}) = show (lhs c) ++ " :- " ++ "<Haskell function>" ++ "."
+  show (Clause name args []) = show (Struct name args) ++ "."
+  show (Clause name args rhs') = show (Struct name args) ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
+  show (ClauseFn name args _) = show (Struct name args) ++ " :- " ++ "<Haskell function>" ++ "."
 
 foldrPl :: (Term -> a -> a) -> a -> Term -> a
 foldrPl f k (Struct "." [h, t]) = f h (foldrPl f k t)
