@@ -1,6 +1,6 @@
 % Find all solutions of an 11 by 11 board.
 % The \+ with the fail is a trick to make it find all solutions.
-queensBenchmark :- time(\+ (queens(11, _Qs), fail)).
+queensBenchmark :- time(\+ (queens(11, _), fail)).
 queens(N,Qs) :- rangeList(1,N,Ns), queens3(Ns,[],Qs).
 
 queens3(UnplacedQs, SafeQs, Qs) :-
