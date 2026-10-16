@@ -41,12 +41,7 @@ createDB :: Foldable t => t Clause -> [Atom] -> Database
 createDB clauses emptyPredicates =
   DB $
     foldr
-      ( \clause ->
-          maybe
-            id
-            (\sig -> Map.insertWith (++) sig [clause])
-            (termSignature (Struct (predicateName clause) (predicateArgs clause)))
-      )
+      (\clause -> Map.insertWith (++) (Signature (predicateName clause) $ length $ predicateArgs clause) [clause])
       (Map.fromList [(Signature name 0, []) | name <- emptyPredicates])
       clauses
 
@@ -54,21 +49,13 @@ getClauses :: Term -> Database -> [Clause]
 getClauses term (DB index) = fromMaybe [] $ (`Map.lookup` index) =<< termSignature term
 
 asserta :: Term -> Database -> Database
-asserta fact@(Struct name args) (DB index) =
-  DB $
-    maybe
-      index
-      (\sig -> Map.insertWith (++) sig [Clause name args []] index)
-      (termSignature fact)
+asserta (Struct name args) (DB index) =
+  DB $ Map.insertWith (++) (Signature name $ length args) [Clause name args []] index
 asserta _ db = db
 
 assertz :: Term -> Database -> Database
-assertz fact@(Struct name args) (DB index) =
-  DB $
-    maybe
-      index
-      (\sig -> Map.insertWith (flip (++)) sig [Clause name args []] index)
-      (termSignature fact)
+assertz (Struct name args) (DB index) =
+  DB $ Map.insertWith (flip (++)) (Signature name $ length args) [Clause name args []] index
 assertz _ db = db
 
 abolish :: Term -> Database -> Database
