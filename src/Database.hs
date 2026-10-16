@@ -55,7 +55,7 @@ asserta fact@(Struct name args) (DB index) =
       index
       (\sig -> Map.insertWith (++) sig [Clause name args []] index)
       (termSignature fact)
-asserta _ _ = error ""
+asserta _ db = db
 
 assertz :: Term -> Database -> Database
 assertz fact@(Struct name args) (DB index) =
@@ -64,7 +64,7 @@ assertz fact@(Struct name args) (DB index) =
       index
       (\sig -> Map.insertWith (flip (++)) sig [Clause name args []] index)
       (termSignature fact)
-assertz _ _ = error ""
+assertz _ db = db
 
 abolish :: Term -> Database -> Database
 abolish fact (DB index) = DB $ maybe index (\sig -> Map.adjust deleteFact sig index) (termSignature fact)
