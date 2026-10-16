@@ -82,7 +82,6 @@ clause = do
         -- custom "expecting" label to avoid showing ":-" twice
         reservedOp ":-" <|> reservedOp ":−" <?> show ":-"
         terms
-      -- return (Clause t ts)
       case t of
         Struct name args -> return (name, args, ts)
         _ -> parserFail "unexpected term type at clause head"
@@ -144,11 +143,11 @@ bottom =
     <|> number
     <|> stringLiteral
     <|> cut
-      <$ char '!'
-    <|> Struct "{}"
-      <$> braces terms
-    <|> parens term
-    <|> operatorLiteral
+    <$ char '!'
+      <|> Struct "{}"
+    <$> braces terms
+      <|> parens term
+      <|> operatorLiteral
 
 toParser :: Syntax.Operator -> Parsec.Operator String () Identity Term
 toParser (PrefixOp name) = Prefix (reservedOp name >> return (\t -> Struct name [t]))
@@ -176,11 +175,11 @@ functorWithSpelling :: ParsecT String () Identity (String, String)
 functorWithSpelling =
   (\f -> (f, f))
     <$> (lookAhead lower >> identifier)
-    <|> (\f -> (f, f))
-      <$> operator
-    <|> (\f -> (f, "'" ++ f ++ "'"))
-      <$> between (char '\'') (char '\'') (many (noneOf "'"))
-    <?> "functor"
+      <|> (\f -> (f, f))
+    <$> operator
+      <|> (\f -> (f, "'" ++ f ++ "'"))
+    <$> between (char '\'') (char '\'') (many (noneOf "'"))
+      <?> "functor"
 
 struct :: ParsecT String () Identity Term
 struct = do
