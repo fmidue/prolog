@@ -15,7 +15,19 @@ import Test.HUnit hiding (path)
 import Text.Parsec
 
 import Data.Functor.Identity (Identity)
-import Language.Prolog (Program, Term, VariableName, bottom, consult, consultString, parseQuery, resolve, term, vname, whitespace)
+import Language.Prolog (
+  Program,
+  Term,
+  VariableName,
+  bottom,
+  consult,
+  consultString,
+  parseQuery,
+  resolve,
+  term,
+  vname,
+  whitespace,
+ )
 
 main :: IO ()
 main = do
