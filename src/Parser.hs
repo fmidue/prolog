@@ -99,7 +99,7 @@ clause = do
         vars = map (var . ("d_" ++) . (a ++) . show) [0 .. length rhs']
         rhs'' = sequenceA $ zipWith3 translate' rhs' vars (tail vars)
       in
-        (a,arguments ts (head vars) (last vars),) <$> rhs''
+        (a, arguments ts (head vars) (last vars), ) <$> rhs''
     translate (Var _, _) = Nothing
     translate (Cut _, _) = Nothing
 
