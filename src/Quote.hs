@@ -41,7 +41,7 @@ parsePrologExp parser name str = do
       const (fail $ "Quasi-quoted expressions of type " ++ show (typeOf x) ++ " are not implemented.")
         `extQ` unquote -- Term
         `extQ` (listE . map unquote) -- [Term]
-        `extQ` unquoteClause -- (Atom,[Term],[Goal])
+        `extQ` unquoteClause -- (Atom, [Term], [Goal])
         `extQ` (listE . map unquoteClause) -- [(Atom, [Term], [Goal])]
         $ x
     Left e -> fail (show e)
