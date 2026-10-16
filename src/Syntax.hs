@@ -32,7 +32,7 @@ where
 
 import Data.Char (digitToInt)
 import Data.Generics (Data (..))
-import Data.List (intercalate)
+import Data.List (intercalate, uncons, unsnoc)
 #if !MIN_VERSION_base(4,18,0)
 import Data.Typeable (Typeable)
 #endif
@@ -148,10 +148,10 @@ prettyPrint _ _ (Cut _) = "!"
 spaced :: [Char] -> [Char]
 spaced s =
   let
-    h = head s
-    l = last s
+    condPrefix = maybe False ((`notElem` ",;") . fst) $ uncons s
+    condPostfix = maybe False ((/= ';') . snd) $ unsnoc s
   in
-    spaceIf (h `notElem` ",;") ++ s ++ spaceIf (l /= ';')
+    spaceIf condPrefix ++ s ++ spaceIf condPostfix
 
 spaceIf :: Bool -> String
 spaceIf True = " "
