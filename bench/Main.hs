@@ -5,7 +5,7 @@
 
 module Main (main) where
 
-import Language.Prolog (Term (..), VariableName (..), consult, resolve)
+import Language.Prolog (Clause (..), Term (..), VariableName (..), consult, resolve)
 import Language.Prolog.Quote (ts)
 
 import Control.DeepSeq (NFData (rnf), deepseq)
@@ -24,8 +24,9 @@ main = do
   args <- getArgs
   let n = (case args of [] -> 6; (x : _) -> read x) :: Int
   Right p <- consult "bench/queens.pl"
+  let program = map (\(name, args', goals) -> Clause name args' goals) p
   putStrLn "Starting benchmark..."
-  case resolve p [ts|queens($n,Qs)|] of
+  case resolve program [ts|queens($n,Qs)|] of
     Left err -> putStrLn err
     Right qs ->
       putStrLn $ qs `deepseq` "Number of solutions: " ++ show (length qs)
