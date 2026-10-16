@@ -58,9 +58,9 @@ assertz (Struct name args) (DB index) =
   DB $ Map.insertWith (flip (++)) (Signature name $ length args) [Clause name args []] index
 assertz _ db = db
 
-abolish :: Term -> Database -> Database
-abolish fact (DB index) = DB $ maybe index (\sig -> Map.adjust deleteFact sig index) (termSignature fact)
+abolish :: (Atom, [Term]) -> Database -> Database
+abolish (factName, factArgs) (DB index) = DB $ Map.adjust deleteFact (Signature factName $ length factArgs) index
   where
-    deleteFact (Clause name args [] : cs) | Struct name args == fact = cs
+    deleteFact (Clause name args [] : cs) | factName == name && args == factArgs = cs
     deleteFact (_ : cs) = cs
     deleteFact [] = []

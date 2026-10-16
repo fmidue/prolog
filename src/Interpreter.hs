@@ -302,7 +302,7 @@ resolveP program goals = map cleanup <$> runReaderT (resolve' wildN 1 (root, [],
       createConnections (path, usf, goals'') [(1 : path, [], [])] [(1 : path, usf, gs)]
 
       clauses <- asks (getClauses t)
-      case [t' | Clause name args [] <- clauses, let t' = Struct name args, isJust (unify t t')] of
+      case [(name, args) | Clause name args [] <- clauses, isJust (unify t $ Struct name args)] of
         [] -> return (fail "retract/1")
         (fact : _) -> local (abolish fact) $ resolve' wildN' depth (1 : path, usf, gs) stack
     resolve' wildN' depth (path, usf, goals''@(nextGoal@(Struct "=" [l, r]) : gs)) stack = do
