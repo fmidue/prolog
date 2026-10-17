@@ -62,5 +62,5 @@ abolish :: (Atom, [Term]) -> Database -> Database
 abolish (factName, factArgs) (DB index) = DB $ Map.adjust deleteFact (Signature factName $ length factArgs) index
   where
     deleteFact (Clause name args [] : cs) | factName == name && args == factArgs = cs
-    deleteFact (_ : cs) = cs
+    deleteFact (f : cs) = f : deleteFact cs
     deleteFact [] = []
