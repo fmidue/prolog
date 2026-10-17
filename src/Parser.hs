@@ -43,6 +43,9 @@ import Text.Parsec.Pos (updatePosString)
 import qualified Text.Parsec.Token as P
 
 import Data.Functor.Identity (Identity)
+import Data.List (uncons)
+import qualified Data.List.NonEmpty as NE (fromList, head, last, tail, toList)
+import Data.Maybe (mapMaybe)
 import Syntax (
   Assoc (AssocLeft, AssocRight),
   Atom,
@@ -96,10 +99,10 @@ clause = do
     translate (Struct a ts, rhs') =
       let
         -- We explicitly choose otherwise invalid variable names
-        vars = map (var . ("d_" ++) . (a ++) . show) [0 .. length rhs']
-        rhs'' = sequenceA $ zipWith3 translate' rhs' vars (tail vars)
+        vars = NE.fromList $ map (var . ("d_" ++) . (a ++) . show) [0 .. length rhs']
+        rhs'' = sequenceA $ zipWith3 translate' rhs' (NE.toList vars) (NE.tail vars)
       in
-        (a,arguments ts (head vars) (last vars),) <$> rhs''
+        (a,arguments ts (NE.head vars) (NE.last vars),) <$> rhs''
     translate (Var _, _) = Nothing
     translate (Cut _, _) = Nothing
 
@@ -173,12 +176,9 @@ vname = lookAhead upper >> (VariableName 0 <$> identifier)
 
 functorWithSpelling :: ParsecT String () Identity (String, String)
 functorWithSpelling =
-  (\f -> (f, f))
-    <$> (lookAhead lower >> identifier)
-    <|> (\f -> (f, f))
-      <$> operator
-    <|> (\f -> (f, "'" ++ f ++ "'"))
-      <$> between (char '\'') (char '\'') (many (noneOf "'"))
+  (\f -> (f, f)) <$> (lookAhead lower >> identifier)
+    <|> (\f -> (f, f)) <$> operator
+    <|> (\f -> (f, "'" ++ f ++ "'")) <$> between (char '\'') (char '\'') (many (noneOf "'"))
     <?> "functor"
 
 struct :: ParsecT String () Identity Term
@@ -220,7 +220,7 @@ langProlog =
     , P.nestedComments = True
     , P.identStart = letter
     , P.identLetter = letter <|> digit <|> char '_'
-    , P.opStart = oneOf (map head operatorNames)
+    , P.opStart = oneOf (mapMaybe (fmap fst . uncons) operatorNames)
     , P.opLetter = oneOf "#$&@*+/<=>\\^~" -- sodiv"
     , P.reservedNames = []
     , P.reservedOpNames = [".", ":-", ":−", "|", "-->"]

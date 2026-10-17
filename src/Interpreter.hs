@@ -20,14 +20,11 @@ module Interpreter (
 where
 
 import Control.Applicative (Alternative)
+import Control.Monad (MonadPlus (..), unless, void)
 import Control.Monad.Except (
   MonadError (throwError),
-  MonadFix,
-  MonadPlus (mzero),
-  MonadTrans (..),
-  unless,
-  void,
  )
+import Control.Monad.Fix (MonadFix)
 import Control.Monad.Reader (
   MonadReader (local),
   ReaderT (runReaderT),
@@ -39,6 +36,7 @@ import Control.Monad.State (
   modify,
   runState,
  )
+import Control.Monad.Trans (MonadTrans (..))
 import Control.Monad.Writer (
   MonadWriter (tell),
   WriterT,

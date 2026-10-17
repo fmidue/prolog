@@ -18,7 +18,7 @@ import Data.Functor.Identity (Identity)
 import Language.Prolog (
   Clause (..),
   Program,
-  Term (..),
+  Term,
   VariableName,
   bottom,
   consult,

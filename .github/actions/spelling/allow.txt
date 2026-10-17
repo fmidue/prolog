@@ -23,8 +23,10 @@ selectq
 snd
 sodiv
 succ
+uncons
 Unif
 unlines
+unsnoc
 unwords
 usf
 vname
