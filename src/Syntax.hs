@@ -1,9 +1,13 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ViewPatterns #-}
+#if !MIN_VERSION_base(4,18,0)
+{-# LANGUAGE DerivingStrategies #-}
+#endif
 
 module Syntax (
   Term (..),
@@ -27,8 +31,11 @@ module Syntax (
 where
 
 import Data.Char (digitToInt)
-import Data.Generics (Data (..), Typeable)
-import Data.List (intercalate)
+import Data.Generics (Data (..))
+import Data.List (intercalate, uncons, unsnoc)
+#if !MIN_VERSION_base(4,18,0)
+import Data.Typeable (Typeable)
+#endif
 import GHC.Generics (Generic)
 import Language.Haskell.TH.Lift (deriveLiftMany)
 import Language.Haskell.TH.Syntax (Lift (..))
@@ -37,7 +44,10 @@ data Term
   = Struct Atom [Term]
   | Var VariableName
   | Cut Int
-  deriving (Data, Eq, Generic, Typeable)
+  deriving (Data, Eq, Generic)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 var :: String -> Term
 var = Var . VariableName 0
@@ -48,7 +58,10 @@ cut = Cut 0
 data Clause
   = Clause {lhs :: Term, rhs_ :: [Goal]}
   | ClauseFn {lhs :: Term, fn :: [Term] -> [Goal]}
-  deriving (Data, Generic, Typeable)
+  deriving (Data, Generic)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 rhs :: Clause -> [Term] -> [Goal]
 rhs (Clause _ rhs') = const rhs'
@@ -57,7 +70,10 @@ rhs (ClauseFn _ fn') = fn'
 data VariableName
   = VariableName Int String
   | Wildcard (Maybe Int)
-  deriving (Data, Eq, Generic, Ord, Typeable)
+  deriving (Data, Eq, Generic, Ord)
+#if !MIN_VERSION_base(4,18,0)
+  deriving Typeable
+#endif
 
 newWildcard :: VariableName
 newWildcard = Wildcard Nothing
@@ -132,10 +148,10 @@ prettyPrint _ _ (Cut _) = "!"
 spaced :: [Char] -> [Char]
 spaced s =
   let
-    h = head s
-    l = last s
+    condPrefix = maybe True ((`notElem` ",;") . fst) $ uncons s
+    condPostfix = maybe False ((/= ';') . snd) $ unsnoc s
   in
-    spaceIf (h `notElem` ",;") ++ s ++ spaceIf (l /= ';')
+    spaceIf condPrefix ++ s ++ spaceIf condPostfix
 
 spaceIf :: Bool -> String
 spaceIf True = " "
