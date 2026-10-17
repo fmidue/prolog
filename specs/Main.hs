@@ -16,6 +16,7 @@ import Text.Parsec
 
 import Data.Functor.Identity (Identity)
 import Language.Prolog (
+  Clause (..),
   Program,
   Term,
   VariableName,
@@ -41,10 +42,11 @@ main = do
       if hasFixture
         then consult fixture
         else return $ Right []
+    let p' = map (\(name, args', goals) -> Clause name args' goals) <$> p
     text <- readFile fname
     case parse specFile fname text of
       Left err -> return (dropExtension fname ~: (assertFailure (show err) :: IO ()))
-      Right tests -> return (dropExtension fname ~: tests p)
+      Right tests -> return (dropExtension fname ~: tests p')
   counts' <- runTestTT (test (parserMessageTests ++ tests))
   colorizeResult counts'
   if errors counts' + failures counts' == 0

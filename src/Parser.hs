@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Parser (
   consult,
   consultString,
@@ -46,9 +48,9 @@ import qualified Data.List.NonEmpty as NE (fromList, head, last, tail, toList)
 import Data.Maybe (mapMaybe)
 import Syntax (
   Assoc (AssocLeft, AssocRight),
-  Clause (Clause),
+  Atom,
+  Goal,
   Operator (..),
-  Program,
   Term (..),
   VariableName (VariableName),
   arguments,
@@ -61,19 +63,19 @@ import Syntax (
   var,
  )
 
-consult :: FilePath -> IO (Either ParseError Program)
+consult :: FilePath -> IO (Either ParseError [(Atom, [Term], [Goal])])
 consult = fmap consultString . readFile
 
-consultString :: String -> Either ParseError Program
+consultString :: String -> Either ParseError [(Atom, [Term], [Goal])]
 consultString = parse (whitespace >> program <* eof) "(input)"
 
 parseQuery :: String -> Either ParseError [Term]
 parseQuery = parse (whitespace >> terms <* eof) "(query)"
 
-program :: ParsecT String () Identity [Clause]
+program :: ParsecT String () Identity [(Atom, [Term], [Goal])]
 program = many (clause <* reservedOp "." <* whitespace)
 
-clause :: ParsecT String () Identity Clause
+clause :: ParsecT String () Identity (Atom, [Term], [Goal])
 clause = do
   t <- struct <* whitespace
   dcg t <|> normal t
@@ -83,7 +85,9 @@ clause = do
         -- custom "expecting" label to avoid showing ":-" twice
         reservedOp ":-" <|> reservedOp ":−" <?> show ":-"
         terms
-      return (Clause t ts)
+      case t of
+        Struct name args -> return (name, args, ts)
+        _ -> parserFail "unexpected term type at clause head"
 
     dcg t = do
       reservedOp "-->" <* whitespace
@@ -94,12 +98,11 @@ clause = do
 
     translate (Struct a ts, rhs') =
       let
-        lhs' = Struct a (arguments ts (NE.head vars) (NE.last vars))
         -- We explicitly choose otherwise invalid variable names
         vars = NE.fromList $ map (var . ("d_" ++) . (a ++) . show) [0 .. length rhs']
         rhs'' = sequenceA $ zipWith3 translate' rhs' (NE.toList vars) (NE.tail vars)
       in
-        Clause lhs' <$> rhs''
+        (a,arguments ts (NE.head vars) (NE.last vars),) <$> rhs''
     translate (Var _, _) = Nothing
     translate (Cut _, _) = Nothing
 

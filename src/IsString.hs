@@ -8,13 +8,13 @@ import GHC.Exts (IsString (..))
 import Text.Parsec (eof, parse)
 
 import Parser (clause, term, vname)
-import Syntax (Clause, Term, VariableName)
+import Syntax (Clause (..), Term (..), VariableName)
 
 instance IsString Clause where
   fromString s =
     case parse (clause <* eof) "(Clause literal)" s of
       Left e -> error (show e)
-      Right c -> c
+      Right (name, args, goals) -> Clause name args goals
 instance IsString Term where
   fromString s =
     case parse (term <* eof) "(Term literal)" s of

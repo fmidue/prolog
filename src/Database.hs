@@ -21,7 +21,7 @@ import qualified Data.Map.Strict as Map (
  )
 
 import Data.Maybe (fromMaybe)
-import Syntax (Atom, Clause (Clause, lhs), Term (..))
+import Syntax (Atom, Clause (Clause, predicateArgs, predicateName), Term (..))
 
 data Signature = Signature Atom Int deriving (Eq, Ord)
 instance Show Signature where
@@ -41,7 +41,7 @@ createDB :: Foldable t => t Clause -> [Atom] -> Database
 createDB clauses emptyPredicates =
   DB $
     foldr
-      (\clause -> maybe id (\sig -> Map.insertWith (++) sig [clause]) (termSignature (lhs clause)))
+      (\clause -> Map.insertWith (++) (Signature (predicateName clause) $ length $ predicateArgs clause) [clause])
       (Map.fromList [(Signature name 0, []) | name <- emptyPredicates])
       clauses
 
@@ -49,24 +49,18 @@ getClauses :: Term -> Database -> [Clause]
 getClauses term (DB index) = fromMaybe [] $ (`Map.lookup` index) =<< termSignature term
 
 asserta :: Term -> Database -> Database
-asserta fact (DB index) =
-  DB $
-    maybe
-      index
-      (\sig -> Map.insertWith (++) sig [Clause fact []] index)
-      (termSignature fact)
+asserta (Struct name args) (DB index) =
+  DB $ Map.insertWith (++) (Signature name $ length args) [Clause name args []] index
+asserta _ db = db
 
 assertz :: Term -> Database -> Database
-assertz fact (DB index) =
-  DB $
-    maybe
-      index
-      (\sig -> Map.insertWith (flip (++)) sig [Clause fact []] index)
-      (termSignature fact)
+assertz (Struct name args) (DB index) =
+  DB $ Map.insertWith (flip (++)) (Signature name $ length args) [Clause name args []] index
+assertz _ db = db
 
-abolish :: Term -> Database -> Database
-abolish fact (DB index) = DB $ maybe index (\sig -> Map.adjust deleteFact sig index) (termSignature fact)
+abolish :: (Atom, [Term]) -> Database -> Database
+abolish (factName, factArgs) (DB index) = DB $ Map.adjust deleteFact (Signature factName $ length factArgs) index
   where
-    deleteFact (Clause t [] : cs) | t == fact = cs
-    deleteFact (_ : cs) = cs
+    deleteFact (Clause name args [] : cs) | factName == name && args == factArgs = cs
+    deleteFact (f : cs) = f : deleteFact cs
     deleteFact [] = []

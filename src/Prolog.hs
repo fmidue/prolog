@@ -100,12 +100,13 @@ runQuery' t mFile qstr = do
     Nothing -> return $ Right []
   case r of
     Right p -> do
+      let p' = map (\(name, args, goals) -> Clause name args goals) p
       case parseQuery qstr of
         Right q -> case t of
-          Tracing -> case runWriterT $ resolve p q of
+          Tracing -> case runWriterT $ resolve p' q of
             Left e -> printError e
             Right (u, t') -> putStrLn t' >> pure u
-          NoTracing -> case resolve p q of
+          NoTracing -> case resolve p' q of
             Left e -> printError e
             Right u -> pure u
         Left err -> do
@@ -125,12 +126,13 @@ runQueryN' t n mFile qstr = do
     Nothing -> return $ Right []
   case r of
     Right p -> do
+      let p' = map (\(name, args, goals) -> Clause name args goals) p
       case parseQuery qstr of
         Right q -> case t of
-          Tracing -> case runWriterT $ resolveN n p q of
+          Tracing -> case runWriterT $ resolveN n p' q of
             Left e -> printError e
             Right (u, t') -> putStrLn t' >> pure u
-          NoTracing -> case resolveN n p q of
+          NoTracing -> case resolveN n p' q of
             Left e -> printError e
             Right u -> pure u
         Left err -> do
