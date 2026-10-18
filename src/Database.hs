@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 module Database (
   createDB,
   hasPredicate,
@@ -20,10 +23,14 @@ import qualified Data.Map.Strict as Map (
   member,
  )
 
+import Data.Data (Data)
 import Data.Maybe (fromMaybe)
+import GHC.Generics (Generic)
 import Syntax (Atom, Clause (Clause, predicateArgs, predicateName), Term (..))
 
-data Signature = Signature Atom Int deriving (Eq, Ord)
+data Signature = Signature Atom Int
+  deriving (Data, Eq, Generic, Ord)
+
 instance Show Signature where
   show (Signature name arity) = name ++ "/" ++ show arity
 
