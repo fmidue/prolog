@@ -5,7 +5,7 @@ module Database (
   asserta,
   assertz,
   abolish,
-  Signature (),
+  Signature (..),
   termSignature,
   Database,
 )
