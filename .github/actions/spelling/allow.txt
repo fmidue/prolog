@@ -23,6 +23,7 @@ selectq
 snd
 sodiv
 succ
+SWI
 uncons
 Unif
 unifiability
