@@ -39,9 +39,11 @@ module Prolog (
   runQuery',
   runQueryN,
   runQueryN',
+  Signature (..),
 )
 where
 
+import Database (Signature (..))
 import Interpreter (
   MonadGraphGen (..),
   MonadTrace (..),
