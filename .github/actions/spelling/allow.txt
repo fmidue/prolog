@@ -25,6 +25,7 @@ sodiv
 succ
 uncons
 Unif
+unifiability
 unlines
 unsnoc
 unwords
