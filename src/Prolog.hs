@@ -40,10 +40,11 @@ module Prolog (
   runQueryN,
   runQueryN',
   Signature (..),
+  termSignature,
 )
 where
 
-import Database (Signature (..))
+import Database (Signature (..), termSignature)
 import Interpreter (
   MonadGraphGen (..),
   MonadTrace (..),
