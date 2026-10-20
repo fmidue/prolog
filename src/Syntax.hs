@@ -112,8 +112,8 @@ instance Show Term where
   show = prettyPrint False 0
 
 prettyPrint :: Bool -> Int -> Term -> [Char]
-prettyPrint True _ t@(Struct "," [_, _]) =
-  "(" ++ prettyPrint False 0 t ++ ")"
+prettyPrint True _ (Struct "," [l, r]) =
+  "(" ++ prettyPrint True 0 l ++ ", " ++ prettyPrint True 0 r ++ ")"
 prettyPrint f n (Struct (flip lookup operatorTable -> Just (p, InfixOp assoc name)) [l, r]) =
   parensIf (n >= p) $ prettyPrint f n_l l ++ spaced name ++ prettyPrint f n_r r
   where
@@ -175,7 +175,8 @@ instance Show VariableName where
 
 instance Show Clause where
   show (Clause name args []) = show (Struct name args) ++ "."
-  show (Clause name args rhs') = show (Struct name args) ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
+  show (Clause name args rhs') =
+    show (Struct name args) ++ " :- " ++ intercalate ", " (map (prettyPrint True 1) rhs') ++ "."
   show (ClauseFn name args _) = show (Struct name args) ++ " :- " ++ "<Haskell function>" ++ "."
 
 foldrPl :: (Term -> a -> a) -> a -> Term -> a
