@@ -112,8 +112,8 @@ instance Show Term where
   show = prettyPrint False 0
 
 prettyPrint :: Bool -> Int -> Term -> [Char]
-prettyPrint True _ t@(Struct "," [_, _]) =
-  "(" ++ prettyPrint False 0 t ++ ")"
+prettyPrint True _ (Struct "," [l, r]) =
+  "(" ++ prettyPrint True 0 l ++ ", " ++ prettyPrint True 0 r ++ ")"
 prettyPrint f n (Struct (flip lookup operatorTable -> Just (p, InfixOp assoc name)) [l, r]) =
   parensIf (n >= p) $ prettyPrint f n_l l ++ spaced name ++ prettyPrint f n_r r
   where
