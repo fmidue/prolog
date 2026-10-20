@@ -175,7 +175,7 @@ instance Show VariableName where
 
 instance Show Clause where
   show (Clause name args []) = show (Struct name args) ++ "."
-  show (Clause name args rhs') = show (Struct name args) ++ " :- " ++ intercalate ", " (map show rhs') ++ "."
+  show (Clause name args rhs') = show (Struct name args) ++ " :- " ++ intercalate ", " (map (prettyPrint True 1) rhs') ++ "."
   show (ClauseFn name args _) = show (Struct name args) ++ " :- " ++ "<Haskell function>" ++ "."
 
 foldrPl :: (Term -> a -> a) -> a -> Term -> a
