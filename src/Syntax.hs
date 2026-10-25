@@ -8,6 +8,7 @@
 #if !MIN_VERSION_base(4,18,0)
 {-# LANGUAGE DerivingStrategies #-}
 #endif
+{-# LANGUAGE RecordWildCards #-}
 
 module Syntax (
   Term (..),
@@ -47,7 +48,7 @@ data Term
   = Struct Atom [Term]
   | Var VariableName
   | Cut Int
-  deriving (Data, Eq, Generic)
+  deriving (Data, Eq, Generic, Show)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
 #endif
@@ -66,6 +67,21 @@ data Clause
   deriving Typeable
 #endif
 
+instance Show Clause where
+  show c =
+    name
+      ++ " {predicateName = "
+      ++ show (predicateName c)
+      ++ ", predicateArgs = "
+      ++ show (predicateArgs c)
+      ++ ", "
+      ++ lastArg
+      ++ "}"
+    where
+      (name, lastArg) = case c of
+        Clause {} -> ("Clause", "rhs_ = " ++ show (rhs_ c))
+        ClauseFn {} -> ("ClauseFn", "fn = <function>")
+
 rhs :: Clause -> [Term] -> [Goal]
 rhs (Clause _ _ rhs') = const rhs'
 rhs (ClauseFn _ _ fn') = fn'
@@ -73,7 +89,7 @@ rhs (ClauseFn _ _ fn') = fn'
 data VariableName
   = VariableName Int String
   | Wildcard (Maybe Int)
-  deriving (Data, Eq, Generic, Ord)
+  deriving (Data, Eq, Generic, Ord, Show)
 #if !MIN_VERSION_base(4,18,0)
   deriving Typeable
 #endif
