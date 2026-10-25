@@ -27,6 +27,9 @@ module Syntax (
   hierarchy,
   Operator (..),
   Assoc (..),
+  prettifyVariableName,
+  prettifyTerm,
+  prettifyClause,
 )
 where
 
@@ -108,8 +111,8 @@ compoundTerms :: Term -> Maybe (Int, Atom, [Term])
 compoundTerms (Struct a ts) = Just (length ts, a, ts)
 compoundTerms _ = Nothing
 
-instance Show Term where
-  show = prettyPrint False 0
+prettifyTerm :: Term -> String
+prettifyTerm = prettyPrint False 0
 
 prettyPrint :: Bool -> Int -> Term -> [Char]
 prettyPrint f n (Struct (flip lookup infixOperatorTable -> Just (p, InfixOp assoc name)) [l, r]) =
@@ -141,7 +144,7 @@ prettyPrint _ _ t@(Struct "." [_, _]) =
     isNil _ = False
 prettyPrint _ _ (Struct a []) = a
 prettyPrint _ _ (Struct a ts) = a ++ "(" ++ intercalate ", " (map (prettyPrint True 0) ts) ++ ")"
-prettyPrint _ _ (Var v) = show v
+prettyPrint _ _ (Var v) = prettifyVariableName v
 -- prettyPrint _ _ Wildcard        = "_"
 prettyPrint _ _ (Cut _) = "!"
 
@@ -178,17 +181,20 @@ opInfix p ops = [(name, (p, op)) | op@(InfixOp _ name) <- ops]
 opPrefix :: Int -> [Operator] -> [(Atom, (Int, Operator))]
 opPrefix p ops = [(name, (p, op)) | op@(PrefixOp name) <- ops]
 
-instance Show VariableName where
-  show (VariableName 0 v) = v
-  show (VariableName i v) = v ++ subscriptDigits i
-  show (Wildcard (Just i)) = "_" ++ show i
-  show (Wildcard Nothing) = "_"
+prettifyVariableName :: VariableName -> String
+prettifyVariableName (VariableName 0 v) = v
+prettifyVariableName (VariableName i v) = v ++ subscriptDigits i
+prettifyVariableName (Wildcard (Just i)) = "_" ++ show i
+prettifyVariableName (Wildcard Nothing) = "_"
 
-instance Show Clause where
-  show (Clause name args []) = show (Struct name args) ++ "."
-  show (Clause name args rhs') =
-    show (Struct name args) ++ " :- " ++ prettyPrint False 0 (foldr1 conjunction (concatMap flattenConjunction rhs')) ++ "."
-  show (ClauseFn name args _) = show (Struct name args) ++ " :- " ++ "<Haskell function>" ++ "."
+prettifyClause :: Clause -> String
+prettifyClause (Clause name args []) = prettifyTerm (Struct name args) ++ "."
+prettifyClause (Clause name args rhs') =
+  prettifyTerm (Struct name args)
+    ++ " :- "
+    ++ prettyPrint False 0 (foldr1 conjunction (concatMap flattenConjunction rhs'))
+    ++ "."
+prettifyClause (ClauseFn name args _) = prettifyTerm (Struct name args) ++ " :- " ++ "<Haskell function>" ++ "."
 
 foldrPl :: (Term -> a -> a) -> a -> Term -> a
 foldrPl f k (Struct "." [h, t]) = f h (foldrPl f k t)

@@ -41,6 +41,9 @@ module Prolog (
   runQueryN',
   Signature (..),
   termSignature,
+  prettifyVariableName,
+  prettifyTerm,
+  prettifyClause,
 )
 where
 
@@ -76,6 +79,9 @@ import Syntax (
   Term (..),
   VariableName (..),
   cut,
+  prettifyClause,
+  prettifyTerm,
+  prettifyVariableName,
   rhs,
   var,
  )

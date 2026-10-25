@@ -1,7 +1,7 @@
 module PrettyPrintingSpec where
 
 import Control.Monad (forM_)
-import Language.Prolog (Clause (Clause), Term (Struct), consultString)
+import Language.Prolog (Clause (Clause), Term (Struct), consultString, prettifyClause)
 import Test.HUnit (assertFailure)
 import Test.Hspec (Spec, describe, it, shouldBe)
 
@@ -63,10 +63,10 @@ spec = describe "pretty printing" $ do
     forM_ preservations $ \(input, expected) -> do
       it input $ case consultString input of
         Left err -> assertFailure $ show err
-        Right [(n, args, goals)] -> show (Clause n args goals) `shouldBe` expected
+        Right [(n, args, goals)] -> prettifyClause (Clause n args goals) `shouldBe` expected
         _ -> assertFailure "only one clause should be parsed"
 
   describe "it should correctly print the given value" $ do
-    forM_ expectations $ \(input, expected) -> do
-      it (show input) $
-        show input `shouldBe` expected
+    forM_ (zip [1 :: Int ..] expectations) $ \(i, (input, expected)) -> do
+      it ("case " ++ show i) $
+        prettifyClause input `shouldBe` expected
