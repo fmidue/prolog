@@ -112,16 +112,19 @@ instance Show Term where
   show = prettyPrint False 0
 
 prettyPrint :: Bool -> Int -> Term -> [Char]
-prettyPrint True _ (Struct "," [l, r]) =
-  "(" ++ prettyPrint True 0 l ++ ", " ++ prettyPrint True 0 r ++ ")"
-prettyPrint f n (Struct (flip lookup operatorTable -> Just (p, InfixOp assoc name)) [l, r]) =
-  parensIf (n >= p) $ prettyPrint f n_l l ++ spaced name ++ prettyPrint f n_r r
+prettyPrint f n (Struct (flip lookup infixOperatorTable -> Just (p, InfixOp assoc name)) [l, r]) =
+  parensIf addParens $ prettyPrint f' n_l l ++ spaced name ++ prettyPrint f' n_r r
   where
+    addParens = f && name == "," || n >= p
+    f' = not addParens && f
     (n_l, n_r) = case assoc of
       AssocLeft -> (p - 1, p)
       AssocRight -> (p, p - 1)
-prettyPrint f n (Struct (flip lookup operatorTable -> Just (p, PrefixOp name)) [r]) =
-  parensIf (n >= p) $ name ++ prettyPrint f p {- Non-associative -} r
+prettyPrint f n (Struct (flip lookup prefixOperatorTable -> Just (p, PrefixOp name)) [r]) =
+  parensIf addParens $ name ++ prettyPrint f' p {- Non-associative -} r
+  where
+    addParens = n >= p
+    f' = not addParens && f
 prettyPrint _ _ t@(Struct "." [_, _]) =
   let (ts, rest) = g [] t
   in -- case guard (isNil rest) >> sequence (map toChar ts) of
@@ -161,11 +164,19 @@ parensIf :: Bool -> String -> String
 parensIf True s = "(" ++ s ++ ")"
 parensIf False s = s
 
-operatorTable :: [(String, (Int, Operator))]
-operatorTable = concat $ zipWith (map . g) [1 ..] $ hierarchy False
-  where
-    g p op@(InfixOp _ name) = (name, (p, op))
-    g p op@(PrefixOp name) = (name, (p, op))
+-- Split by arity so that an operator name used as both prefix and infix
+-- (e.g. '-') matches the right rule: prefix '-' has precedence 10, infix '-' 5.
+infixOperatorTable :: [(Atom, (Int, Operator))]
+infixOperatorTable = concat $ zipWith opInfix [1 ..] (hierarchy True)
+
+prefixOperatorTable :: [(Atom, (Int, Operator))]
+prefixOperatorTable = concat $ zipWith opPrefix [1 ..] (hierarchy True)
+
+opInfix :: Int -> [Operator] -> [(Atom, (Int, Operator))]
+opInfix p ops = [(name, (p, op)) | op@(InfixOp _ name) <- ops]
+
+opPrefix :: Int -> [Operator] -> [(Atom, (Int, Operator))]
+opPrefix p ops = [(name, (p, op)) | op@(PrefixOp name) <- ops]
 
 instance Show VariableName where
   show (VariableName 0 v) = v
@@ -176,7 +187,7 @@ instance Show VariableName where
 instance Show Clause where
   show (Clause name args []) = show (Struct name args) ++ "."
   show (Clause name args rhs') =
-    show (Struct name args) ++ " :- " ++ intercalate ", " (map (prettyPrint True 1) rhs') ++ "."
+    show (Struct name args) ++ " :- " ++ prettyPrint False 0 (foldr1 conjunction (concatMap flattenConjunction rhs')) ++ "."
   show (ClauseFn name args _) = show (Struct name args) ++ " :- " ++ "<Haskell function>" ++ "."
 
 foldrPl :: (Term -> a -> a) -> a -> Term -> a
@@ -191,6 +202,13 @@ cons t1 t2 = Struct "." [t1, t2]
 
 nil :: Term
 nil = Struct "[]" []
+
+conjunction :: Term -> Term -> Term
+conjunction l r = Struct "," [l, r]
+
+flattenConjunction :: Term -> [Term]
+flattenConjunction (Struct "," [l, r]) = flattenConjunction l ++ flattenConjunction r
+flattenConjunction t = [t]
 
 data Operator
   = PrefixOp String
