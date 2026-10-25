@@ -11,6 +11,7 @@ fst
 GHC
 Haskeline
 hds
+Hspec
 HUnit
 lexer
 mempty
