@@ -169,8 +169,8 @@ prettyPrint _ _ (Cut _) = "!"
 
 spaced :: [Char] -> [Char]
 spaced s =
-  let condPrefix = maybe True ((`notElem` ",;") . fst) $ uncons s
-  in spaceIf condPrefix ++ s ++ spaceIf (not $ null s)
+  let condPrefix = maybe False ((`notElem` ",;") . fst) $ uncons s
+  in spaceIf condPrefix ++ s ++ " "
 
 spaceIf :: Bool -> String
 spaceIf True = " "
