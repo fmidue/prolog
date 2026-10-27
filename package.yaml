@@ -63,6 +63,19 @@ tests:
       - filepath
       - HUnit
       - ansi-terminal
+  unit:
+    source-dirs: test
+    main: Spec.hs
+    ghc-options:
+      - -Wall
+      - -Werror
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - prolog
+      - HUnit
+      - hspec
 
 benchmarks:
   bench:
