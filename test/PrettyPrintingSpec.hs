@@ -19,18 +19,18 @@ d = Struct "d" []
 
 preservations :: [(String, String)]
 preservations =
-  [ ("p :- (a;b),c,d.", "p :- (a;b), c, d.")
-  , ("p :- a;b,c,d.", "p :- a;b, c, d.")
-  , ("p :- a;(b,c,d).", "p :- a;b, c, d.")
-  , ("p :- (a;(b,(c,d))).", "p :- a;b, c, d.")
-  , ("p :- a;b, (c, d).", "p :- a;b, c, d.")
-  , ("p :- (a, b); c.", "p :- a, b;c.")
-  , ("p :- a ; b ; c.", "p :- a;b;c.")
-  , ("p :- a, ! ; b ; c.", "p :- a, !;b;c.")
-  , ("p :- (a ; b) ; c.", "p :- (a;b);c.")
+  [ ("p :- (a;b),c,d.", "p :- (a; b), c, d.")
+  , ("p :- a;b,c,d.", "p :- a; b, c, d.")
+  , ("p :- a;(b,c,d).", "p :- a; b, c, d.")
+  , ("p :- (a;(b,(c,d))).", "p :- a; b, c, d.")
+  , ("p :- a;b, (c, d).", "p :- a; b, c, d.")
+  , ("p :- (a, b); c.", "p :- a, b; c.")
+  , ("p :- a ; b ; c.", "p :- a; b; c.")
+  , ("p :- a, ! ; b ; c.", "p :- a, !; b; c.")
+  , ("p :- (a ; b) ; c.", "p :- (a; b); c.")
   , ("p :- a, b, c.", "p :- a, b, c.")
-  , ("p :- \\+ a ; b.", "p :- \\+a;b.")
-  , ("p :- not(a) ; b.", "p :- not(a);b.")
+  , ("p :- \\+ a ; b.", "p :- \\+a; b.")
+  , ("p :- not(a) ; b.", "p :- not(a); b.")
   , ("p :- \\+ (a, b).", "p :- \\+(a, b).")
   , ("p :- not(a, b).", "p :- not(a, b).")
   , ("p(X) :- X = [a, b, c].", "p(X) :- X = [a,b,c].")
@@ -39,7 +39,7 @@ preservations =
   , ("p(X,Y,Z) :- X is Y * Y + Z.", "p(X, Y, Z) :- X is Y * Y + Z.")
   , ("p(X,Y,Z) :- X is Y * (Y + Z).", "p(X, Y, Z) :- X is Y * (Y + Z).")
   , ("p(X) :- X =.. [Y, Z].", "p(X) :- X =.. [Y,Z].")
-  , ("p :- q(a, g(b, c)); h.", "p :- q(a, g(b, c));h.")
+  , ("p :- q(a, g(b, c)); h.", "p :- q(a, g(b, c)); h.")
   , ("p(X) :- X = Y, g(Y).", "p(X) :- X = Y, g(Y).")
   , ("p(X) :- (X = Y, Y = Z), g(Z).", "p(X) :- X = Y, Y = Z, g(Z).")
   , ("p(X, Y) :- X is -Y.", "p(X, Y) :- X is -Y.")
@@ -50,11 +50,11 @@ preservations =
 expectations :: [(Clause, String)]
 expectations =
   [ -- a ; (b, (c, d))
-    (Clause "p" [] [dis a (con b (con c d))], "p :- a;b, c, d.")
+    (Clause "p" [] [dis a (con b (con c d))], "p :- a; b, c, d.")
   , -- a ; (b, c)
-    (Clause "p" [] [dis a (con b c)], "p :- a;b, c.")
+    (Clause "p" [] [dis a (con b c)], "p :- a; b, c.")
   , -- (a, (b, c)) ; d
-    (Clause "p" [] [dis (con a (con b c)) d], "p :- a, b, c;d.")
+    (Clause "p" [] [dis (con a (con b c)) d], "p :- a, b, c; d.")
   ]
 
 spec :: Spec
