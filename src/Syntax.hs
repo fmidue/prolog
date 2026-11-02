@@ -60,6 +60,7 @@ var = Var . VariableName 0
 cut :: Term
 cut = Cut 0
 
+-- | An abbreviation for a clause defined in a program
 type ProgramClause = (Atom, [Term], [Goal])
 
 data Clause
