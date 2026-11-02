@@ -11,7 +11,7 @@ import Text.Parsec (eof, parse)
 import Text.Parsec.String (Parser)
 
 import Parser (clause, program, term, terms, whitespace)
-import Syntax (Atom, Clause (..), Goal, Term (..))
+import Syntax (Clause (..), ProgramClause, Term (..))
 
 t :: QuasiQuoter
 t = prologQuasiQuoter term "term"
@@ -41,8 +41,8 @@ parsePrologExp parser name str = do
       const (fail $ "Quasi-quoted expressions of type " ++ show (typeOf x) ++ " are not implemented.")
         `extQ` unquote -- Term
         `extQ` (listE . map unquote) -- [Term]
-        `extQ` unquoteClause -- (Atom, [Term], [Goal])
-        `extQ` (listE . map unquoteClause) -- [(Atom, [Term], [Goal])]
+        `extQ` unquoteClause -- ProgramClause
+        `extQ` (listE . map unquoteClause) -- [ProgramClause]
         $ x
     Left e -> fail (show e)
   where
@@ -52,7 +52,7 @@ parsePrologExp parser name str = do
     unquote (Struct a ts') = [e|Struct a $(listE $ map unquote ts')|]
     unquote t' = lift t'
 
-    unquoteClause :: (Atom, [Term], [Goal]) -> Q Exp
+    unquoteClause :: ProgramClause -> Q Exp
     unquoteClause (name', args, rhs) =
       [e|Clause name' $(listE $ map unquote args) $(listE $ map unquote rhs)|]
 

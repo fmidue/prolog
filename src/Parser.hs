@@ -48,9 +48,8 @@ import qualified Data.List.NonEmpty as NE (fromList, head, last, tail, toList)
 import Data.Maybe (mapMaybe)
 import Syntax (
   Assoc (AssocLeft, AssocRight),
-  Atom,
-  Goal,
   Operator (..),
+  ProgramClause,
   Term (..),
   VariableName (VariableName),
   arguments,
@@ -63,19 +62,19 @@ import Syntax (
   var,
  )
 
-consult :: FilePath -> IO (Either ParseError [(Atom, [Term], [Goal])])
+consult :: FilePath -> IO (Either ParseError [ProgramClause])
 consult = fmap consultString . readFile
 
-consultString :: String -> Either ParseError [(Atom, [Term], [Goal])]
+consultString :: String -> Either ParseError [ProgramClause]
 consultString = parse (whitespace >> program <* eof) "(input)"
 
 parseQuery :: String -> Either ParseError [Term]
 parseQuery = parse (whitespace >> terms <* eof) "(query)"
 
-program :: ParsecT String () Identity [(Atom, [Term], [Goal])]
+program :: ParsecT String () Identity [ProgramClause]
 program = many (clause <* reservedOp "." <* whitespace)
 
-clause :: ParsecT String () Identity (Atom, [Term], [Goal])
+clause :: ParsecT String () Identity ProgramClause
 clause = do
   t <- struct <* whitespace
   dcg t <|> normal t
