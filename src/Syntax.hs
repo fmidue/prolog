@@ -31,6 +31,7 @@ module Syntax (
   prettifyVariableName,
   prettifyTerm,
   prettifyClause,
+  ProgramClause,
 )
 where
 
@@ -58,6 +59,8 @@ var = Var . VariableName 0
 
 cut :: Term
 cut = Cut 0
+
+type ProgramClause = (Atom, [Term], [Goal])
 
 data Clause
   = Clause {predicateName :: Atom, predicateArgs :: [Term], rhs_ :: [Goal]}
