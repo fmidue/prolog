@@ -44,6 +44,7 @@ module Prolog (
   prettifyVariableName,
   prettifyTerm,
   prettifyClause,
+  ProgramClause,
 )
 where
 
@@ -76,6 +77,7 @@ import Syntax (
   Clause (..),
   Goal,
   Program,
+  ProgramClause,
   Term (..),
   VariableName (..),
   cut,
